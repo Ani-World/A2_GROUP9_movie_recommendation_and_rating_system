@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onboarding - Archiever</title>
+    <style>
+      /* (your CSS preserved exactly) */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      body {
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        color: white;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        margin-bottom: 30px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .user-info {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 16px;
+      }
+      .onboarding-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 40px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+      }
+      #status {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+      }
+      .tile {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 15px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .tile:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      .poster {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+      .meta {
+        margin: 8px 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      .small {
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 400;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+      }
+      .btns {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 8px;
+      }
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 0;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        flex: 1;
+      }
+      .like {
+        background: #2ecc71;
+        color: white;
+      }
+      .like:hover {
+        background: #27ae60;
+        transform: translateY(-2px);
+      }
+      .neutral {
+        background: #f1c40f;
+        color: white;
+      }
+      .neutral:hover {
+        background: #f39c12;
+        transform: translateY(-2px);
+      }
+      .dislike {
+        background: #e74c3c;
+        color: white;
+      }
+      .dislike:hover {
+        background: #c0392b;
+        transform: translateY(-2px);
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 30px;
+        gap: 20px;
+      }
+      .submit-btn {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .submit-btn:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(106, 17, 203, 0.6);
+      }
+      .submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      #submitMsg {
+        color: #2ecc71;
+        font-weight: 500;
+      }
+      .error {
+        color: #e74c3c !important;
+      }
+      .recommendations-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .rec-card {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .rec-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.12);
+      }
+      .rec-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+      .dashboard-redirect {
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .dashboard-btn {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
+        margin-top: 10px;
+      }
+      .dashboard-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(106, 17, 203, 0.6);
+      }
+      .redirect-countdown {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 10px;
+      }
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+        .rec-grid {
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        }
+        header {
+          flex-direction: column;
+          gap: 15px;
+          align-items: flex-start;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+      }
+      .selected {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 2px #6a11cb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <div class="logo-icon">A</div>
+          <span>Archiever</span>
+        </div>
+        <div class="user-info">
+          User ID: <span id="userIdDisplay">Loading...</span>
+        </div>
+      </header>
+
+      <div class="onboarding-card">
+        <h1>Tell Us What You Like</h1>
+        <p class="subtitle">
+          Rate these movies to help us understand your taste and get
+          personalized recommendations
+        </p>
+
+        <div id="status">
+          <span class="loading-spinner"></span>
+          Loading movies...
+        </div>
+
+        <div id="tiles" class="grid" style="display: none"></div>
+
+        <div class="controls">
+          <button id="submitBtn" class="submit-btn">
+            <span id="btnText">Submit Responses</span>
+            <div
+              id="btnSpinner"
+              class="loading-spinner"
+              style="display: none"
+            ></div>
+          </button>
+          <span id="submitMsg"></span>
+        </div>
+      </div>
+
+      <div
+        id="recommendations"
+        class="recommendations-section"
+        style="display: none"
+      >
+        <h2>Your Initial Recommendations</h2>
+        <div class="rec-grid"></div>
+
+        <div
+          class="dashboard-redirect"
+          id="dashboardRedirect"
+          style="display: none"
+        >
+          <p>Your preferences have been saved successfully!</p>
+          <button id="dashboardBtn" class="dashboard-btn">
+            Go to Dashboard
+          </button>
+          <div class="redirect-countdown" id="redirectCountdown">
+            Redirecting to dashboard in <span id="countdown">3</span> seconds...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* --------------- Config & state --------------- */
+      const API = "http://127.0.0.1:5000";
+      let movies = [];
+      let responsesMap = {}; // movie_id -> like (1,0,-1)
+      let countdownInterval = null;
+      let currentUserId = null;
+      let isSubmitting = false;
+      let moviesLoaded = false; // guard to prevent multiple renderings
+
+      /* --------------- Helpers --------------- */
+      function getUserId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let id = urlParams.get("user_id");
+        if (!id) {
+          id = localStorage.getItem("current_user_id");
+        }
+        return id;
+      }
+
+      function setStatus(text, showSpinner = false) {
+        const st = document.getElementById("status");
+        st.style.display = showSpinner ? "block" : text ? "block" : "none";
+        st.innerHTML =
+          (showSpinner ? '<span class="loading-spinner"></span> ' : "") + text;
+      }
+
+      /* --------------- Initialization --------------- */
+      document.addEventListener("DOMContentLoaded", function () {
+        currentUserId = getUserId();
+
+        if (!currentUserId) {
+          setStatus("User ID not found. Please register or login first.");
+          return;
+        }
+
+        document.getElementById("userIdDisplay").textContent = currentUserId;
+
+        // Only fetch movies once
+        if (!moviesLoaded) {
+          fetchMovies();
+        }
+      });
+
+      /* --------------- Fetch & Render --------------- */
+      async function fetchMovies() {
+        try {
+          setStatus("Loading movies...", true);
+          const res = await fetch(API + "/api/movies/onboarding");
+          const data = await res.json();
+          movies = data.movies || [];
+          renderTiles();
+          moviesLoaded = true;
+          setStatus("", false);
+        } catch (err) {
+          setStatus("Error loading movies. Please try again.");
+          console.error(err);
+        }
+      }
+
+      function renderTiles() {
+        const tiles = document.getElementById("tiles");
+        tiles.innerHTML = "";
+        if (!movies.length) {
+          setStatus("No movies available.");
+          return;
+        }
+        setStatus("Select Like, Neutral, or Dislike for each movie", false);
+        tiles.style.display = "grid";
+
+        // Build with DocumentFragment for faster rendering
+        const frag = document.createDocumentFragment();
+        for (const m of movies) {
+          const div = document.createElement("div");
+          div.className = "tile";
+          div.dataset.movieId = m.movie_id; // store on tile for delegation
+          div.innerHTML = `
+            <img class="poster" src="${m.poster}" alt="${m.name}" onerror="this.src='https://via.placeholder.com/200x280/333/fff?text=No+Poster'"/>
+            <div class="meta">${m.name}</div>
+            <div class="small">${m.year}</div>
+            <div class="btns">
+              <button class="like" data-action="like">Like</button>
+              <button class="neutral" data-action="neutral">Neutral</button>
+              <button class="dislike" data-action="dislike">Dislike</button>
+            </div>
+          `;
+          frag.appendChild(div);
+        }
+        tiles.appendChild(frag);
+
+        // Attach single delegated listener (prevents duplicate event handlers)
+        // Remove previous listener by cloning if present
+        if (!tiles._delegationAttached) {
+          tiles.addEventListener("click", tileClickHandler);
+          tiles._delegationAttached = true;
+        }
+      }
+
+      /* --------------- Delegated click handler --------------- */
+      function tileClickHandler(e) {
+        // find button with data-action
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+
+        const action = btn.dataset.action; // 'like'|'neutral'|'dislike'
+        const tile = btn.closest(".tile");
+        if (!tile) return;
+        const mid = Number(tile.dataset.movieId);
+
+        let likeVal = 0;
+        if (action === "like") likeVal = 1;
+        if (action === "neutral") likeVal = 0;
+        if (action === "dislike") likeVal = -1;
+
+        // update responsesMap
+        responsesMap[mid] = likeVal;
+
+        // visual feedback (reset sibling buttons)
+        tile.querySelectorAll("button[data-action]").forEach((b) => {
+          b.style.opacity = "0.7";
+          b.style.transform = "scale(1)";
+        });
+
+        // highlight selected button
+        btn.style.opacity = "1";
+        btn.style.transform = "scale(1.05)";
+
+        // highlight the tile
+        tile.classList.add("selected");
+      }
+
+      /* --------------- Submit logic (single-shot while submitting) --------------- */
+      document
+        .getElementById("submitBtn")
+        .addEventListener("click", async () => {
+          if (!currentUserId) {
+            alert("User ID not found. Please try again.");
+            return;
+          }
+          if (isSubmitting) {
+            // prevent double submits
+            return;
+          }
+
+          // Prepare responses. If you prefer to include untouched as neutral (0),
+          // uncomment the block below to add neutrals for all movies:
+          /*
+        for (const m of movies) {
+          if (!(m.movie_id in responsesMap)) {
+            responsesMap[m.movie_id] = 0;
+          }
+        }
+        */
+
+          const responses = Object.keys(responsesMap).map((k) => ({
+            movie_id: Number(k),
+            like: responsesMap[k],
+          }));
+
+          if (responses.length === 0) {
+            if (
+              !confirm("You have not rated any movies. Submit empty responses?")
+            )
+              return;
+          }
+
+          const payload = {
+            user_id: parseInt(currentUserId),
+            responses: responses,
+          };
+
+          // UI state
+          const submitBtn = document.getElementById("submitBtn");
+          const btnText = document.getElementById("btnText");
+          const btnSpinner = document.getElementById("btnSpinner");
+          const msgElement = document.getElementById("submitMsg");
+
+          isSubmitting = true;
+          submitBtn.disabled = true;
+          btnText.textContent = "Submitting...";
+          btnSpinner.style.display = "inline-block";
+          msgElement.textContent = "";
+          msgElement.classList.remove("error");
+
+          try {
+            const res = await fetch(API + "/api/onboarding", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+              msgElement.textContent =
+                "Error: " + (data.error || JSON.stringify(data));
+              msgElement.classList.add("error");
+              submitBtn.disabled = false;
+              btnText.textContent = "Submit Responses";
+              btnSpinner.style.display = "none";
+              isSubmitting = false;
+              return;
+            }
+
+            msgElement.textContent = "Preferences saved successfully!";
+            msgElement.classList.remove("error");
+            showRecommendations(data.recommendations || []);
+
+            // keep button disabled to avoid re-submission; you can re-enable if desired
+            btnText.textContent = "Submitted ✓";
+            btnSpinner.style.display = "none";
+          } catch (err) {
+            msgElement.textContent = "Network error. Please try again.";
+            msgElement.classList.add("error");
+            console.error(err);
+            submitBtn.disabled = false;
+            btnText.textContent = "Submit Responses";
+            btnSpinner.style.display = "none";
+            isSubmitting = false;
+          }
+        });
+
+      /* --------------- Show recommendations and redirect logic --------------- */
+      function showRecommendations(recs) {
+        const out = document.getElementById("recommendations");
+        out.style.display = "block";
+
+        const grid = out.querySelector(".rec-grid");
+        grid.innerHTML = "";
+
+        if (!recs.length) {
+          grid.innerHTML =
+            "<div>No recommendations available at this time.</div>";
+        } else {
+          for (const r of recs) {
+            const card = document.createElement("div");
+            card.className = "rec-card";
+            card.innerHTML = `
+              <img src="${r.poster}" alt="${r.name}" onerror="this.src='https://via.placeholder.com/160x200/333/fff?text=No+Poster'">
+              <div style="font-weight:600;margin-top:6px">${r.name}</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:0.9rem">${r.year}</div>
+            `;
+            grid.appendChild(card);
+          }
+        }
+
+        const redirectSection = document.getElementById("dashboardRedirect");
+        redirectSection.style.display = "block";
+
+        // attach single handler via onclick (replaces previous) to avoid duplicates
+        document.getElementById("dashboardBtn").onclick = redirectToDashboard;
+
+        // start countdown (clear any previous)
+        startRedirectCountdown();
+
+        // scroll to recommendations
+        out.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function startRedirectCountdown() {
+        // clear previous if present
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+        }
+        let countdown = 3;
+        const countdownElement = document.getElementById("countdown");
+        countdownElement.textContent = countdown;
+
+        countdownInterval = setInterval(() => {
+          countdown--;
+          countdownElement.textContent = countdown;
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            redirectToDashboard();
+          }
+        }, 1000);
+      }
+
+      function redirectToDashboard() {
+        if (countdownInterval) clearInterval(countdownInterval);
+        if (currentUserId) {
+          // You may change target dashboard path as needed
+          window.location.href = `dashboard.html?user_id=${currentUserId}`;
+        } else {
+          alert("User ID not found. Please try again.");
+        }
+      }
+    </script>
+  </body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onboarding - Archiever</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        color: white;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        margin-bottom: 30px;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .user-info {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 16px;
+      }
+
+      .onboarding-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 40px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+      }
+
+      #status {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .tile {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 15px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .tile:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .poster {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+
+      .meta {
+        margin: 8px 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .small {
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 400;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+      }
+
+      .btns {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 8px;
+      }
+
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 0;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        flex: 1;
+      }
+
+      .like {
+        background: #2ecc71;
+        color: white;
+      }
+
+      .like:hover {
+        background: #27ae60;
+        transform: translateY(-2px);
+      }
+
+      .neutral {
+        background: #f1c40f;
+        color: white;
+      }
+
+      .neutral:hover {
+        background: #f39c12;
+        transform: translateY(-2px);
+      }
+
+      .dislike {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .dislike:hover {
+        background: #c0392b;
+        transform: translateY(-2px);
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 30px;
+        gap: 20px;
+      }
+
+      .submit-btn {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .submit-btn:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(106, 17, 203, 0.6);
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      #submitMsg {
+        color: #2ecc71;
+        font-weight: 500;
+      }
+
+      .error {
+        color: #e74c3c !important;
+      }
+
+      .recommendations-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .rec-card {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .rec-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .rec-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .dashboard-redirect {
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .dashboard-btn {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
+        margin-top: 10px;
+      }
+
+      .dashboard-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(106, 17, 203, 0.6);
+      }
+
+      .redirect-countdown {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        .rec-grid {
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        }
+
+        header {
+          flex-direction: column;
+          gap: 15px;
+          align-items: flex-start;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+      }
+
+      .selected {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 2px #6a11cb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <div class="logo-icon">A</div>
+          <span>Archiever</span>
+        </div>
+        <div class="user-info">
+          User ID: <span id="userIdDisplay">Loading...</span>
+        </div>
+      </header>
+
+      <div class="onboarding-card">
+        <h1>Tell Us What You Like</h1>
+        <p class="subtitle">
+          Rate these movies to help us understand your taste and get
+          personalized recommendations
+        </p>
+
+        <div id="status">
+          <span class="loading-spinner"></span>
+          Loading movies...
+        </div>
+
+        <div id="tiles" class="grid" style="display: none"></div>
+
+        <div class="controls">
+          <button id="submitBtn" class="submit-btn">
+            <span id="btnText">Submit Responses</span>
+            <div
+              id="btnSpinner"
+              class="loading-spinner"
+              style="display: none"
+            ></div>
+          </button>
+          <span id="submitMsg"></span>
+        </div>
+      </div>
+
+      <div
+        id="recommendations"
+        class="recommendations-section"
+        style="display: none"
+      >
+        <h2>Your Initial Recommendations</h2>
+        <div class="rec-grid"></div>
+
+        <div
+          class="dashboard-redirect"
+          id="dashboardRedirect"
+          style="display: none"
+        >
+          <p>Your preferences have been saved successfully!</p>
+          <button id="dashboardBtn" class="dashboard-btn">
+            Go to Dashboard
+          </button>
+          <div class="redirect-countdown" id="redirectCountdown">
+            Redirecting to dashboard in <span id="countdown">3</span> seconds...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:5000";
+      let movies = [];
+      let responsesMap = {}; // movie_id -> like (1,0,-1)
+      let countdownInterval;
+      let currentUserId = null;
+
+      // Get user ID from URL parameters or localStorage
+      function getUserId() {
+        // Try to get from URL parameters first
+        const urlParams = new URLSearchParams(window.location.search);
+        let id = urlParams.get("user_id");
+
+        if (!id) {
+          // Try to get from localStorage
+          id = localStorage.getItem("current_user_id");
+        }
+
+        return id;
+      }
+
+      // Initialize page
+      document.addEventListener("DOMContentLoaded", function () {
+        currentUserId = getUserId();
+
+        if (!currentUserId) {
+          document.getElementById("status").textContent =
+            "User ID not found. Please register or login first.";
+          return;
+        }
+
+        // Display user ID
+        document.getElementById("userIdDisplay").textContent = currentUserId;
+
+        // Fetch movies
+        fetchMovies();
+      });
+
+      async function fetchMovies() {
+        try {
+          const res = await fetch(API + "/api/movies/onboarding");
+          const data = await res.json();
+          movies = data.movies || [];
+          renderTiles();
+        } catch (err) {
+          document.getElementById("status").textContent =
+            "Error loading movies. Please try again.";
+          console.error(err);
+        }
+      }
+
+      function renderTiles() {
+        const tiles = document.getElementById("tiles");
+        tiles.innerHTML = "";
+        if (!movies.length) {
+          document.getElementById("status").textContent =
+            "No movies available.";
+          return;
+        }
+        document.getElementById("status").textContent =
+          "Select Like, Neutral, or Dislike for each movie";
+        document.getElementById("status").style.display = "none";
+        tiles.style.display = "grid";
+
+        movies.forEach((m) => {
+          const div = document.createElement("div");
+          div.className = "tile";
+          div.innerHTML = `
+          <img class="poster" src="${m.poster}" alt="${m.name}" onerror="this.src='https://via.placeholder.com/200x280/333/fff?text=No+Poster'"/>
+          <div class="meta">${m.name}</div>
+          <div class="small">${m.year}</div>
+          <div class="btns">
+            <button class="like" data-id="${m.movie_id}">Like</button>
+            <button class="neutral" data-id="${m.movie_id}">Neutral</button>
+            <button class="dislike" data-id="${m.movie_id}">Dislike</button>
+          </div>
+        `;
+          tiles.appendChild(div);
+        });
+
+        // attach handlers
+        document
+          .querySelectorAll(".like")
+          .forEach((b) =>
+            b.addEventListener("click", () => setResponse(b.dataset.id, 1))
+          );
+        document
+          .querySelectorAll(".neutral")
+          .forEach((b) =>
+            b.addEventListener("click", () => setResponse(b.dataset.id, 0))
+          );
+        document
+          .querySelectorAll(".dislike")
+          .forEach((b) =>
+            b.addEventListener("click", () => setResponse(b.dataset.id, -1))
+          );
+      }
+
+      function setResponse(mid, likeVal) {
+        mid = Number(mid);
+        responsesMap[mid] = likeVal;
+
+        // visual feedback: highlight the selected button and tile
+        const parent = document
+          .querySelector(`[data-id='${mid}']`)
+          .closest(".tile");
+
+        // reset all buttons in that tile
+        parent.querySelectorAll("button").forEach((btn) => {
+          btn.style.opacity = "0.7";
+          btn.style.transform = "scale(1)";
+        });
+
+        // set selected to full opacity and slightly larger
+        let selBtn;
+        if (likeVal === 1)
+          selBtn = parent.querySelector('.like[data-id="' + mid + '"]');
+        if (likeVal === 0)
+          selBtn = parent.querySelector('.neutral[data-id="' + mid + '"]');
+        if (likeVal === -1)
+          selBtn = parent.querySelector('.dislike[data-id="' + mid + '"]');
+
+        if (selBtn) {
+          selBtn.style.opacity = "1";
+          selBtn.style.transform = "scale(1.05)";
+        }
+
+        // Add selected class to tile
+        parent.classList.add("selected");
+      }
+
+      document
+        .getElementById("submitBtn")
+        .addEventListener("click", async () => {
+          if (!currentUserId) {
+            alert("User ID not found. Please try again.");
+            return;
+          }
+
+          // build responses array for movies user interacted with
+          const responses = Object.keys(responsesMap).map((k) => ({
+            movie_id: Number(k),
+            like: responsesMap[k],
+          }));
+
+          if (responses.length === 0) {
+            if (
+              !confirm("You have not rated any movies. Submit empty responses?")
+            )
+              return;
+          }
+
+          const payload = {
+            user_id: parseInt(currentUserId),
+            responses: responses,
+          };
+
+          // Update UI for submission
+          const submitBtn = document.getElementById("submitBtn");
+          const btnText = document.getElementById("btnText");
+          const btnSpinner = document.getElementById("btnSpinner");
+          const msgElement = document.getElementById("submitMsg");
+
+          submitBtn.disabled = true;
+          btnText.textContent = "Submitting...";
+          btnSpinner.style.display = "inline-block";
+          msgElement.textContent = "";
+          msgElement.classList.remove("error");
+
+          try {
+            const res = await fetch(API + "/api/onboarding", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+              msgElement.textContent =
+                "Error: " + (data.error || JSON.stringify(data));
+              msgElement.classList.add("error");
+
+              // Reset button state
+              submitBtn.disabled = false;
+              btnText.textContent = "Submit Responses";
+              btnSpinner.style.display = "none";
+              return;
+            }
+
+            msgElement.textContent = "Preferences saved successfully!";
+            msgElement.classList.remove("error");
+            showRecommendations(data.recommendations || []);
+          } catch (err) {
+            msgElement.textContent = "Network error. Please try again.";
+            msgElement.classList.add("error");
+            console.error(err);
+
+            // Reset button state
+            submitBtn.disabled = false;
+            btnText.textContent = "Submit Responses";
+            btnSpinner.style.display = "none";
+          }
+        });
+
+      function showRecommendations(recs) {
+        const out = document.getElementById("recommendations");
+        out.style.display = "block";
+
+        const grid = out.querySelector(".rec-grid");
+        grid.innerHTML = "";
+
+        if (!recs.length) {
+          grid.innerHTML =
+            "<div>No recommendations available at this time.</div>";
+        } else {
+          recs.forEach((r) => {
+            const card = document.createElement("div");
+            card.className = "rec-card";
+            card.innerHTML = `
+            <img src="${r.poster}" alt="${r.name}" onerror="this.src='https://via.placeholder.com/160x200/333/fff?text=No+Poster'">
+            <div style="font-weight:600;margin-top:6px">${r.name}</div>
+            <div style="color:rgba(255,255,255,0.7);font-size:0.9rem">${r.year}</div>
+          `;
+            grid.appendChild(card);
+          });
+        }
+
+        // Show dashboard redirect section
+        const redirectSection = document.getElementById("dashboardRedirect");
+        redirectSection.style.display = "block";
+
+        // Set up dashboard button
+        document
+          .getElementById("dashboardBtn")
+          .addEventListener("click", redirectToDashboard);
+
+        // Start countdown for automatic redirect (reduced to 3 seconds)
+        startRedirectCountdown();
+
+        // Scroll to recommendations
+        out.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function startRedirectCountdown() {
+        let countdown = 3; // Reduced from 5 to 3 seconds
+        const countdownElement = document.getElementById("countdown");
+
+        countdownInterval = setInterval(() => {
+          countdown--;
+          countdownElement.textContent = countdown;
+
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            redirectToDashboard();
+          }
+        }, 1000);
+      }
+
+      function redirectToDashboard() {
+        // Clear the countdown interval if it's running
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+        }
+
+        if (currentUserId) {
+          // Redirect to dashboard with user ID as query parameter
+          window.location.href = `dashboard.html?user_id=${currentUserId}`;
+        } else {
+          alert("User ID not found. Please try again.");
+        }
+      }
+    </script>
+  </body>
+</html> -->

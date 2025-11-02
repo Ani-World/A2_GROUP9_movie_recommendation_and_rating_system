@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archiever - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-content p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Navigation */
+        .dashboard-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #6a11cb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Carousel Styles */
+        .carousel-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .see-all {
+            color: #6a11cb;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .carousel-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            scrollbar-width: thin;
+            scrollbar-color: #6a11cb transparent;
+        }
+
+        .carousel-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .carousel-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .carousel-container::-webkit-scrollbar-thumb {
+            background: #6a11cb;
+            border-radius: 3px;
+        }
+
+        .movie-card {
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .poster-container {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .rating-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .rating-max {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .movie-info {
+            padding: 1rem;
+        }
+
+        .movie-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-meta {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+        }
+
+        .votes {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Archive Styles */
+        .archive-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .archive-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .archive-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .archive-poster {
+            width: 50px;
+            height: 70px;
+            border-radius: 6px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .archive-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .archive-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .archive-info .movie-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .movie-year {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Analytics Section */
+        .analytics-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .analytics-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .bar-chart-container {
+            overflow-x: auto;
+        }
+
+        .bar-chart {
+            min-width: 600px;
+            height: 200px;
+        }
+
+        .bar {
+            fill: url(#barGradient);
+            transition: all 0.3s ease;
+        }
+
+        .bar:hover {
+            fill: url(#barGradientHover);
+            filter: brightness(1.2);
+        }
+
+        .bar-label {
+            font-size: 10px;
+            fill: rgba(255, 255, 255, 0.8);
+            text-anchor: middle;
+        }
+
+        .bar-value {
+            font-size: 12px;
+            fill: white;
+            font-weight: 600;
+            text-anchor: middle;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+        }
+
+        .modal-poster {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-poster img {
+            max-width: 300px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-details h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .modal-meta span {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .prediction-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .prediction-info h3 {
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .prediction-rating {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .rating-value {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .rating-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .confidence {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 2rem;
+            font-style: italic;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .header-content h1 {
+                font-size: 2rem;
+            }
+            
+            .modal-body {
+                padding: 1.5rem;
+            }
+            
+            .modal-details h2 {
+                font-size: 1.5rem;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .archive-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .movie-card {
+                min-width: 160px;
+            }
+            
+            .dashboard-nav {
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>Welcome to Archiever</h1>
+                <p>Your personal movie recommendation engine</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">U</div>
+                <div>
+                    <div id="userEmail">user@example.com</div>
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7)">User ID: <span id="userIdDisplay">123</span></div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="dashboard-nav">
+            <button class="nav-btn active">Dashboard</button>
+            <button class="nav-btn">Discover</button>
+            <button class="nav-btn">My Watchlist</button>
+            <button class="nav-btn">Ratings</button>
+            <button class="nav-btn">Settings</button>
+        </nav>
+
+        <main id="dashboardMain">
+            <div class="loading-container" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+                <p>Loading your personalized recommendations...</p>
+            </div>
+
+            <div id="recommendationsContent" style="display: none;">
+                <section class="carousel-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Top picks for you</h3>
+                        <span class="see-all">See all</span>
+                    </div>
+                    <div class="carousel-container" id="topPicksCarousel">
+                        <!-- Top picks will be populated here -->
+                    </div>
+                </section>
+
+                <section class="carousel-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Because you liked similar films</h3>
+                        <span class="see-all">See all</span>
+                    </div>
+                    <div class="carousel-container" id="becauseXCarousel">
+                        <!-- Because X items will be populated here -->
+                    </div>
+                </section>
+
+                <section class="carousel-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Similar to your favorites</h3>
+                        <span class="see-all">See all</span>
+                    </div>
+                    <div class="carousel-container" id="similarCarousel">
+                        <!-- Similar items will be populated here -->
+                    </div>
+                </section>
+
+                <section class="carousel-section">
+                    <div class="section-header">
+                        <h3 class="section-title">New & Trending</h3>
+                        <span class="see-all">See all</span>
+                    </div>
+                    <div class="carousel-container" id="trendingCarousel">
+                        <!-- Trending items will be populated here -->
+                    </div>
+                </section>
+
+                <section class="archive-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Your Watch History</h3>
+                        <span class="see-all">View all</span>
+                    </div>
+                    <div class="archive-grid" id="archiveGrid">
+                        <!-- Archive items will be populated here -->
+                    </div>
+                </section>
+
+                <section class="analytics-section">
+                    <h2>Your Rating Analytics</h2>
+                    <div class="bar-chart-container">
+                        <svg class="bar-chart" id="analyticsChart">
+                            <defs>
+                                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#6a11cb" />
+                                    <stop offset="100%" stop-color="#2575fc" />
+                                </linearGradient>
+                                <linearGradient id="barGradientHover" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#7d2cff" />
+                                    <stop offset="100%" stop-color="#3d8cff" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Chart bars will be drawn here -->
+                        </svg>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Movie Detail Modal -->
+    <div class="modal-overlay" id="movieModal">
+        <div class="modal-content">
+            <button class="close-button" id="closeModal">×</button>
+            <div class="modal-body">
+                <div class="modal-poster">
+                    <img id="modalPoster" src="" alt="Movie Poster">
+                </div>
+                <div class="modal-details">
+                    <h2 id="modalTitle">Movie Title</h2>
+                    <div class="modal-meta">
+                        <span id="modalYear">2023</span>
+                        <span id="modalDuration">120 min</span>
+                        <span>Rating: <span id="modalRating">8.5</span>/10</span>
+                        <span>Votes: <span id="modalVotes">1500</span></span>
+                    </div>
+                    <div class="prediction-info">
+                        <h3>Your Prediction</h3>
+                        <div class="prediction-rating">
+                            <span class="rating-value" id="modalPredictedRating">8.2</span>
+                            <span class="rating-label">Predicted Rating</span>
+                        </div>
+                        <div class="confidence">
+                            Confidence: <span id="modalConfidence">0.85</span>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-primary">Add to Watchlist</button>
+                        <button class="btn-secondary">Rate This Movie</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API configuration
+        const API = 'http://127.0.0.1:5000';
+
+        // State variables
+        let topPicks = [];
+        let becauseX = [];
+        let similar = [];
+        let trending = [];
+        let archive = [];
+        let userId = null;
+
+        // DOM elements
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const recommendationsContent = document.getElementById('recommendationsContent');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const movieModal = document.getElementById('movieModal');
+        const closeModal = document.getElementById('closeModal');
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get user ID from localStorage or URL parameter
+            userId = getUserId();
+            if (!userId) {
+                alert('User ID not found. Please log in again.');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            userIdDisplay.textContent = userId;
+            fetchAllData();
+            
+            // Set up modal close event
+            closeModal.addEventListener('click', closeMovieModal);
+            movieModal.addEventListener('click', function(e) {
+                if (e.target === movieModal) {
+                    closeMovieModal();
+                }
+            });
+        });
+
+        // Get user ID from localStorage or URL
+        function getUserId() {
+            // Try to get from URL parameters first
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('user_id');
+            
+            if (!id) {
+                // Try to get from localStorage (set during login)
+                id = localStorage.getItem('user_id');
+            }
+            
+            return id;
+        }
+
+        // Fetch all dashboard data
+        async function fetchAllData() {
+            try {
+                const q = `?user_id=${userId}&n=20`;
+                const recRes = await fetch(`${API}/api/recommendations${q}`);
+                const recJson = await recRes.json();
+                
+                // API returns `hybrid` ordered array in `items`
+                const items = recJson.items || [];
+                topPicks = items.slice(0, 6);
+                
+                // For demo, split into carousels
+                becauseX = items.filter((_, i) => i % 5 === 0).slice(0, 6);
+                similar = items.filter((_, i) => i % 5 === 1).slice(0, 6);
+                trending = items.filter((_, i) => i % 5 === 2).slice(0, 6);
+                
+                // Archive request (user history) - placeholder
+                try {
+                    const archRes = await fetch(`${API}/api/user/archive?user_id=${userId}`);
+                    const archJson = await archRes.json();
+                    archive = archJson.archived || [];
+                } catch (e) {
+                    console.error('Error fetching archive:', e);
+                    archive = [];
+                }
+                
+                renderDashboard();
+            } catch (e) {
+                console.error('Dashboard fetch error', e);
+                loadingIndicator.innerHTML = '<p>Error loading recommendations. Please try again.</p>';
+            }
+        }
+
+        // Render the dashboard with fetched data
+        function renderDashboard() {
+            // Hide loading indicator and show content
+            loadingIndicator.style.display = 'none';
+            recommendationsContent.style.display = 'block';
+            
+            // Populate carousels
+            populateCarousel('topPicksCarousel', topPicks);
+            populateCarousel('becauseXCarousel', becauseX);
+            populateCarousel('similarCarousel', similar);
+            populateCarousel('trendingCarousel', trending);
+            
+            // Populate archive
+            populateArchive('archiveGrid', archive);
+            
+            // Render analytics chart
+            renderBarChart(topPicks.slice(0, 6));
+        }
+
+        // Populate a carousel with movie data
+        function populateCarousel(carouselId, items) {
+            const carousel = document.getElementById(carouselId);
+            
+            if (items.length === 0) {
+                carousel.innerHTML = '<div class="empty-state">No recommendations available</div>';
+                return;
+            }
+            
+            carousel.innerHTML = '';
+            
+            items.forEach(item => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                movieCard.addEventListener('click', () => openMovie(item.movie_id));
+                
+                movieCard.innerHTML = `
+                    <div class="poster-container">
+                        <img src="${item.poster}" alt="${item.Name}" class="movie-poster" onerror="this.src='https://via.placeholder.com/200x280/333/fff?text=No+Poster'">
+                        <div class="rating-badge">
+                            ${item.Rating} <span class="rating-max">/10</span>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <h4 class="movie-title">${item.Name}</h4>
+                        <div class="movie-meta">
+                            <span>${item.year}</span>
+                            <span>•</span>
+                            <span>${item.duration} min</span>
+                        </div>
+                        <div class="votes">${item.Votes} votes</div>
+                    </div>
+                `;
+                
+                carousel.appendChild(movieCard);
+            });
+        }
+
+        // Populate archive grid
+        function populateArchive(archiveId, items) {
+            const archiveGrid = document.getElementById(archiveId);
+            
+            if (items.length === 0) {
+                archiveGrid.innerHTML = '<div class="empty-state">Your archive is empty</div>';
+                return;
+            }
+            
+            archiveGrid.innerHTML = '';
+            
+            items.forEach(item => {
+                const archiveItem = document.createElement('div');
+                archiveItem.className = 'archive-item';
+                archiveItem.addEventListener('click', () => openMovie(item.movie_id));
+                
+                archiveItem.innerHTML = `
+                    <div class="archive-poster">
+                        <img src="${item.poster}" alt="${item.Name}" onerror="this.src='https://via.placeholder.com/50x70/333/fff?text=No+Poster'">
+                    </div>
+                    <div class="archive-info">
+                        <h4 class="movie-title">${item.Name}</h4>
+                        <span class="movie-year">${item.year}</span>
+                    </div>
+                `;
+                
+                archiveGrid.appendChild(archiveItem);
+            });
+        }
+
+        // Open movie details modal
+        async function openMovie(movieId) {
+            try {
+                // Fetch movie metadata
+                const m = await fetch(`${API}/api/movie/${movieId}`);
+                const meta = await m.json();
+                
+                // Fetch prediction
+                const p = await fetch(`${API}/api/predict?user_id=${userId}&movie_id=${movieId}`);
+                const pred = await p.json();
+                
+                // Populate modal with data
+                document.getElementById('modalPoster').src = meta.poster || 'https://via.placeholder.com/300x450/333/fff?text=No+Poster';
+                document.getElementById('modalTitle').textContent = meta.Name;
+                document.getElementById('modalYear').textContent = meta.year;
+                document.getElementById('modalDuration').textContent = `${meta.duration} min`;
+                document.getElementById('modalRating').textContent = meta.Rating;
+                document.getElementById('modalVotes').textContent = meta.Votes;
+                document.getElementById('modalPredictedRating').textContent = pred.predicted_rating || 'N/A';
+                document.getElementById('modalConfidence').textContent = pred.confidence || 'N/A';
+                
+                // Show modal
+                movieModal.style.display = 'flex';
+                
+                // Log to console as in original
+                console.log('movie metadata', meta);
+                console.log('predicted rating', pred);
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+                alert('Error loading movie details. Please try again.');
+            }
+        }
+
+        // Close movie modal
+        function closeMovieModal() {
+            movieModal.style.display = 'none';
+        }
+
+        // Render bar chart for analytics
+        function renderBarChart(data) {
+            const svg = document.getElementById('analyticsChart');
+            svg.innerHTML = '';
+            
+            // Add gradient definitions back (they get cleared when we set innerHTML)
+            const defs = document.createElement('defs');
+            defs.innerHTML = `
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6a11cb" />
+                    <stop offset="100%" stop-color="#2575fc" />
+                </linearGradient>
+                <linearGradient id="barGradientHover" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#7d2cff" />
+                    <stop offset="100%" stop-color="#3d8cff" />
+                </linearGradient>
+            `;
+            svg.appendChild(defs);
+            
+            if (!data || data.length === 0) {
+                svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="rgba(255,255,255,0.6)">No chart data available</text>';
+                return;
+            }
+            
+            const max = Math.max(...data.map(d => parseFloat(d.Rating || 0))) || 1;
+            const barWidth = 80;
+            const spacing = 20;
+            
+            data.forEach((d, i) => {
+                const val = (parseFloat(d.Rating || 0) / max) * 120;
+                const x = i * (barWidth + spacing) + spacing;
+                
+                const barGroup = document.createElement('g');
+                barGroup.className = 'bar-group';
+                
+                barGroup.innerHTML = `
+                    <rect 
+                        x="${x}" 
+                        y="${180 - val}" 
+                        width="${barWidth}" 
+                        height="${val}" 
+                        rx="6"
+                        class="bar"
+                    />
+                    <text 
+                        x="${x + barWidth/2}" 
+                        y="195" 
+                        class="bar-label"
+                    >
+                        ${d.Name.length > 10 ? d.Name.substring(0, 10) + '...' : d.Name}
+                    </text>
+                    <text 
+                        x="${x + barWidth/2}" 
+                        y="${175 - val}" 
+                        class="bar-value"
+                    >
+                        ${d.Rating}
+                    </text>
+                `;
+                
+                svg.appendChild(barGroup);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Archiever</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+      }
+
+      .login-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        padding: 40px 30px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .login-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      h2 {
+        color: #333;
+        margin-bottom: 30px;
+        font-weight: 600;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+      }
+
+      input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      input:focus {
+        border-color: #6a11cb;
+        box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        outline: none;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 15px rgba(106, 17, 203, 0.3);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .msg {
+        margin: 20px 0;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+
+      .success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+      }
+
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+
+      .back-link {
+        margin-top: 20px;
+        display: inline-block;
+        color: #666;
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .back-link:hover {
+        color: #6a11cb;
+      }
+
+      .footer-text {
+        margin-top: 30px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+      }
+
+      .redirect-countdown {
+        font-weight: 600;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 480px) {
+        .login-card {
+          padding: 30px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="logo">A</div>
+        <h2>Welcome Back</h2>
+
+        <form id="loginForm">
+          <div class="input-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <button type="submit">Login</button>
+        </form>
+
+        <div id="msg" class="msg"></div>
+
+        <a href="index.html" class="back-link">← Back to Home</a>
+      </div>
+
+      <p class="footer-text">Secure Login &copy; 2023</p>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:5000";
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const msgElement = document.getElementById("msg");
+          msgElement.textContent = "";
+          msgElement.className = "msg";
+
+          const body = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+          };
+
+          try {
+            const res = await fetch(`${API}/api/auth/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.access_token) {
+              msgElement.textContent =
+                "Login successful! Redirecting to onboarding...";
+              msgElement.className = "msg success";
+              localStorage.setItem("access_token", data.access_token);
+
+              // Create countdown element
+              const countdownElement = document.createElement("div");
+              countdownElement.className = "redirect-countdown";
+              countdownElement.textContent = "Redirecting in 3 seconds...";
+              msgElement.appendChild(countdownElement);
+
+              // demo: call protected profile and log it
+              // const profileRes = await fetch(`${API}/api/user/profile`, {
+              //   headers: { Authorization: "Bearer " + data.access_token },
+              // });
+              // const profile = await profileRes.json();
+              // console.log("profile:", profile);
+
+              // Countdown and redirect to onboarding
+              let countdown = 3;
+              const countdownInterval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = `Redirecting in ${countdown} second${
+                  countdown !== 1 ? "s" : ""
+                }...`;
+
+                if (countdown <= 0) {
+                  clearInterval(countdownInterval);
+                  window.location.href = "onboarding.html";
+                }
+              }, 1000);
+            } else {
+              msgElement.textContent = data.error || JSON.stringify(data);
+              msgElement.className = "msg error";
+            }
+            console.log("login response", res.status, data);
+          } catch (err) {
+            console.error(err);
+            msgElement.textContent = "Network error";
+            msgElement.className = "msg error";
+          }
+        });
+    </script>
+  </body>
+</html>
