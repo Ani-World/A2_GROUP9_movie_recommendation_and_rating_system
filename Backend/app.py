@@ -22,6 +22,19 @@ from math import log1p
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
+import joblib
+import os
+
+# Path to models folder
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
+
+# Load KMeans model
+kmeans_model = joblib.load(os.path.join(MODEL_DIR, "kmeans_model.pkl"))
+
+# Load Regressor model
+regressor_model = joblib.load(os.path.join(MODEL_DIR, "regressor_model.pkl"))
+
+print(f"Loaded models: {type(kmeans_model).__name__}, {type(regressor_model).__name__}")
 
 app = Flask(__name__)
 CORS(app)
