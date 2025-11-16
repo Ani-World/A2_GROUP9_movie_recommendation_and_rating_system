@@ -288,6 +288,7 @@ def onboarding():
     payload_hash = hashlib.sha1(payload_bytes).hexdigest()
     now = time.time()
 
+    # Dedupe check (avoid reprocessing identical submissions)
     last = _last_onboarding_submission.get(user_id)
     if last:
         last_hash, last_ts, last_resp = last
@@ -310,17 +311,43 @@ def onboarding():
         rating_matrix[user_id][movie_id] = pseudo_rating
         saved += 1
 
-    # Build simple recommendations: movies not rated by user ordered by popularity
-    rated_movie_ids = set(rating_matrix[user_id].keys())
-    recs = [m for m in sorted(_movies_map.values(), key=lambda x: x["popularity"], reverse=True) if m["movie_id"] not in rated_movie_ids][:10]
-    out = [{"movie_id": m["movie_id"], "name": m["Name"], "year": m["Year"], "poster": m.get("poster")} for m in recs]
+    # ---------------------------------------------
+    # Improved Recommendations (cluster + popularity)
+    # ---------------------------------------------
+    liked_movie_ids = [r["movie_id"] for r in responses if r.get("like") == 1]
+    if liked_movie_ids:
+        liked_clusters = [cluster_assignments.get(mid) for mid in liked_movie_ids if mid in cluster_assignments]
+        if liked_clusters:
+            # Most common cluster among liked movies
+            top_cluster = max(set(liked_clusters), key=liked_clusters.count)
+            recs = [m for m in _movies_map.values() if cluster_assignments.get(m["movie_id"]) == top_cluster]
+            recs = sorted(recs, key=lambda x: x["popularity"], reverse=True)[:10]
+        else:
+            # Fallback to popularity if cluster not found
+            recs = sorted(_movies_map.values(), key=lambda x: x["popularity"], reverse=True)[:10]
+    else:
+        # Fallback if no liked movies
+        recs = sorted(_movies_map.values(), key=lambda x: x["popularity"], reverse=True)[:10]
+
+    # Format output same as before
+    out = [
+        {
+            "movie_id": m["movie_id"],
+            "name": m["Name"],
+            "year": m["Year"],
+            "poster": m.get("poster"),
+        }
+        for m in recs
+    ]
 
     response_body = {"message": f"saved {saved} responses", "recommendations": out}
 
-    # store dedupe cache
+    # Cache the last onboarding submission for dedupe
     _last_onboarding_submission[user_id] = (payload_hash, now, response_body)
     app.logger.info(f"onboarding: saved {saved} responses for user {user_id}")
+
     return jsonify(response_body), 200
+
 
 # -----------------------------
 # Rate endpoint (for testing)

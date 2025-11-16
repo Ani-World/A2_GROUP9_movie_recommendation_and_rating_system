@@ -1,113 +1,124 @@
-# import pandas as pd
-# from sklearn.cluster import KMeans
-# from sklearn.linear_model import LinearRegression
-# import joblib
-# import os
+"""
+train_kmeans_and_regressor.py
+----------------------------------
+Builds KMeans clusters using:
+ - Genre_* one-hot columns (semantic)
+ - Actor 1 encoded as one-hot (cast-based)
+Also fits a regression model (using numeric + genre).
 
-# # Load clean dataset
-# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# data_path = os.path.join(BASE_DIR, "..", "datasets", "movies_data_processed.csv")
-# df = pd.read_csv(data_path)
+Outputs:
+ - Backend/models/kmeans_model.pkl
+ - Backend/models/regressor_model.pkl
+ - Backend/models/scaler.joblib
+ - Backend/models/feature_cols.json
+ - Backend/models/name_features_mapping.csv
+"""
 
-# # Example feature matrix
-# X = df[["Year", "Duration", "Rating", "Votes"]].fillna(0)
-
-# # Train KMeans
-# kmeans = KMeans(n_clusters=4, random_state=42)
-# kmeans.fit(X)
-# joblib.dump(kmeans, "Backend/models/kmeans_model.pkl")
-
-# # Train Linear Regressor
-# regressor = LinearRegression()
-# regressor.fit(X, df["Rating"])
-# joblib.dump(regressor, "Backend/models/regressor_model.pkl")
-
-# print("✅ Models saved: kmeans_model.pkl, regressor_model.pkl")
 import os
 import pandas as pd
 import numpy as np
 import joblib
 import json
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LinearRegression
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
+# -----------------------------
+# Paths
+# -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "datasets", "movies_data_processed.csv")
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+os.makedirs(MODEL_DIR, exist_ok=True)
 
+# -----------------------------
+# Load dataset
+# -----------------------------
 df = pd.read_csv(DATA_PATH)
-print(f"✅ Loaded dataset: {df.shape[0]} rows, {df.shape[1]} columns")
+print(f"✅ Loaded dataset: {len(df)} rows, {len(df.columns)} columns")
 
 # -----------------------------
-# Feature matrix for clustering
+# Feature selection for clustering
 # -----------------------------
-cluster_features = ["Year", "Duration", "Rating", "Votes"]
-X = df[cluster_features].fillna(0)
+# Genre features
+genre_cols = [c for c in df.columns if c.startswith("Genre_")]
+if not genre_cols:
+    raise ValueError("No Genre_* columns found in dataset.")
 
-# Scale the data
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+# Actor 1 encoding
+if "Actor 1" not in df.columns:
+    raise ValueError("Missing 'Actor 1' column in dataset.")
 
-# Train KMeans
-kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
-kmeans.fit(X_scaled)
+# One-hot encode top actors to avoid too many columns
+top_actors = df["Actor 1"].value_counts().head(50).index.tolist()
+df["Actor_1_encoded"] = df["Actor 1"].apply(lambda x: x if x in top_actors else "Other")
 
-# Train Linear Regressor
+actor_encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+actor_features = actor_encoder.fit_transform(df[["Actor_1_encoded"]])
+actor_feature_names = [f"Actor_{a}" for a in actor_encoder.categories_[0]]
+
+# Combine Genre + Actor features
+X_genre_actor = np.hstack([df[genre_cols].fillna(0).values, actor_features])
+feature_cols_cluster = genre_cols + actor_feature_names
+
+print(f"📊 Using {len(feature_cols_cluster)} features for clustering (Genres + Actor 1)")
+
+# -----------------------------
+# Scale and Cluster
+# -----------------------------
+scaler_cluster = StandardScaler()
+X_cluster_scaled = scaler_cluster.fit_transform(X_genre_actor)
+
+n_clusters = 10  # genre+actor groups, can tune later
+kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=20)
+kmeans.fit(X_cluster_scaled)
+
+df["Cluster"] = kmeans.labels_
+print(f"✅ KMeans trained with {n_clusters} clusters")
+
+# -----------------------------
+# Regression Model (for backend)
+# -----------------------------
+# Use both genre and numeric info
+numeric_cols = ["Year_norm", "Duration_norm", "Rating_norm", "Votes_log"]
+feature_cols_regression = genre_cols + numeric_cols
+X_reg = df[feature_cols_regression].fillna(0)
+scaler_reg = StandardScaler()
+X_reg_scaled = scaler_reg.fit_transform(X_reg)
+
 regressor = LinearRegression()
-regressor.fit(X_scaled, df["Rating"].fillna(0))
-
-# Save models
-model_dir = os.path.join(BASE_DIR, "models")
-os.makedirs(model_dir, exist_ok=True)
-
-joblib.dump(kmeans, os.path.join(model_dir, "kmeans_model.pkl"))
-joblib.dump(regressor, os.path.join(model_dir, "regressor_model.pkl"))
-joblib.dump(scaler, os.path.join(model_dir, "scaler.joblib"))
-
-print("✅ Models saved: kmeans_model.pkl, regressor_model.pkl, scaler.joblib")
+regressor.fit(X_reg_scaled, df["Rating"].fillna(df["Rating"].mean()))
+print("✅ Linear regression model trained for rating prediction")
 
 # -----------------------------
-# Prepare files for cluster-based recommendation
+# Save Models
 # -----------------------------
-feature_cols = cluster_features
-with open(os.path.join(model_dir, "feature_cols.json"), "w") as f:
-    json.dump(feature_cols, f)
+joblib.dump(kmeans, os.path.join(MODEL_DIR, "kmeans_model.pkl"))
+joblib.dump(regressor, os.path.join(MODEL_DIR, "regressor_model.pkl"))
+joblib.dump(scaler_cluster, os.path.join(MODEL_DIR, "scaler_cluster.joblib"))
+joblib.dump(scaler_reg, os.path.join(MODEL_DIR, "scaler.joblib"))  # for regression
 
-# Save mapping of movie names to features
-name_feat = df[["Name"] + cluster_features].copy()
-name_feat.to_csv(os.path.join(model_dir, "name_features_mapping.csv"), index=False)
-print("✅ Exported cluster recommender mapping: name_features_mapping.csv")
+# Save metadata
+metadata = {
+    "cluster_feature_cols": feature_cols_cluster,
+    "regression_feature_cols": feature_cols_regression,
+    "actor_encoder_categories": actor_encoder.categories_[0].tolist(),
+}
+with open(os.path.join(MODEL_DIR, "feature_cols.json"), "w") as f:
+    json.dump(metadata, f, indent=2)
+
+# Save name-to-feature mapping
+df_out = df[["Name", "Actor 1", "Cluster"] + genre_cols].copy()
+df_out.to_csv(os.path.join(MODEL_DIR, "name_features_mapping.csv"), index=False)
+print("✅ All models and feature mappings saved to Backend/models")
 
 # -----------------------------
-# Prepare for content-based recommender
+# Cluster overview (quick check)
 # -----------------------------
-def build_genre_matrix(df):
-    genre_cols = [c for c in df.columns if c.startswith("Genre_")]
-    if genre_cols:
-        print(f"Using {len(genre_cols)} Genre_* columns for content features.")
-        return df[genre_cols].fillna(0).astype(int).values, "genres", genre_cols
-    elif "Genre" in df.columns:
-        print("Building Genre_* columns from text in 'Genre'.")
-        genres = df["Genre"].fillna("").astype(str).str.get_dummies(sep=",")
-        return genres.values, "genres", list(genres.columns)
-    elif any(c in df.columns for c in ["Plot", "Description", "Overview"]):
-        text_col = next(c for c in ["Plot", "Description", "Overview"] if c in df.columns)
-        print(f"Using TF-IDF on '{text_col}' for content features.")
-        tfidf = TfidfVectorizer(max_features=2000, stop_words="english")
-        feature_matrix = tfidf.fit_transform(df[text_col].fillna("").astype(str)).toarray()
-        return feature_matrix, "text", [f"tfidf_{i}" for i in range(feature_matrix.shape[1])]
-    else:
-        raise ValueError("No usable Genre_* or text columns found for content-based recommender.")
+print("\n📊 Cluster distribution:")
+print(df["Cluster"].value_counts().sort_index())
 
-try:
-    feature_matrix, feature_type, used_cols = build_genre_matrix(df)
-    np.save(os.path.join(model_dir, "content_features.npy"), feature_matrix)
-    with open(os.path.join(model_dir, "content_features_meta.json"), "w") as f:
-        json.dump({"feature_type": feature_type, "columns": used_cols}, f, indent=2)
-    print(f"✅ Content-based features saved ({feature_type}, {feature_matrix.shape[1]} columns)")
-except Exception as e:
-    print("⚠️ Content-based recommender not built:", e)
-
-print("\n🎬 All models and feature mappings prepared successfully.")
+print("\n🎬 Example movies per cluster:")
+for c in range(min(10, n_clusters)):
+    samples = df[df["Cluster"] == c]["Name"].head(3).tolist()
+    print(f"Cluster {c}: {samples}")
