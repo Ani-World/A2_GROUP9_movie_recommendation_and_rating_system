@@ -88,7 +88,7 @@ def load_movies_quickly():
         except Exception as e:
             print("❌ Error loading movies from database:", e)
 
-
+load_movies_quickly()
 # -----------------------------
 # Variables requested (names used)
 # -----------------------------
@@ -243,7 +243,7 @@ import random
 @app.route('/api/movies/onboarding', methods=['GET'])
 def movies_onboarding():
     # Filter: only movies with avg_rating > 3
-    eligible = [m for m in _movies_map.values() if m.get("Rating", 0) > 3]
+    eligible = [m for m in _movies_map.values() if m.get("Rating", 0) > 3.8 and m.get("Votes", 0) >= 500]
 
     # Randomly select 25 (or fewer if not enough)
     random_movies = random.sample(eligible, min(25, len(eligible)))

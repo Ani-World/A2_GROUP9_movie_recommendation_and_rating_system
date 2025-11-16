@@ -8,10 +8,10 @@
 
 # # === 2. Your OMDB API keys (replace with your actual keys) ===
 # OMDB_KEYS = [
-#     "YOUR_KEY_1",
-#     "YOUR_KEY_2",
-#     "YOUR_KEY_3",
-#     "YOUR_KEY_4",
+#     "",
+#     "",
+#     "",
+#     "",
 # ]
 
 # # Rotate keys infinitely
@@ -84,14 +84,14 @@ import os
 # -----------------------------
 # Config
 # -----------------------------
-OMDB_API_KEY = "2f0ad043"
+OMDB_API_KEY = "507dbc7c"
 OMDB_URL = "https://www.omdbapi.com/"
 DB_PATH = "instance/movies.db"  # path to your existing init.db
 
 # -----------------------------
 # Update posters function
 # -----------------------------
-def update_posters(start_row=541, end_row=1000, batch_size=100):
+def update_posters(start_row=5001, batch_size=500):
     if not os.path.exists(DB_PATH):
         print(f"❌ Database not found at {DB_PATH}")
         return
@@ -99,11 +99,20 @@ def update_posters(start_row=541, end_row=1000, batch_size=100):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Fetch all movies in the given range, ordered by rowid
-    cursor.execute("SELECT rowid AS movie_id, name FROM movies WHERE rowid BETWEEN ? AND ? ORDER BY rowid", (start_row, end_row))
+    # Get total rows in table
+    cursor.execute("SELECT COUNT(*) FROM movies")
+    total_rows = cursor.fetchone()[0]
+
+    print(f"Total movies in DB: {total_rows}")
+
+    # Fetch all movies from start_row to the last row
+    cursor.execute(
+        "SELECT rowid AS movie_id, name FROM movies WHERE rowid >= ? ORDER BY rowid",
+        (start_row,)
+    )
     rows = cursor.fetchall()
     total = len(rows)
-    print(f"📦 {total} movies in range {start_row}-{end_row}. Starting poster updates...")
+    print(f"📦 {total} movies from row {start_row} to {total_rows}. Starting poster updates...")
 
     start = 0
     batch_num = 1
@@ -134,11 +143,10 @@ def update_posters(start_row=541, end_row=1000, batch_size=100):
         batch_num += 1
 
     conn.close()
-    print("🎉 Posters for movies 541-1000 updated successfully!")
+    print(f"🎉 Posters for movies from row {start_row} to {total_rows} updated successfully!")
 
 # -----------------------------
 # Run script
 # -----------------------------
 if __name__ == "__main__":
-    update_posters(start_row=541, end_row=1000, batch_size=100)
-
+    update_posters(start_row=5001, batch_size=500)
