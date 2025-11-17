@@ -4,7 +4,7 @@ Works: This code provides content-based movie recommendations using cosine simil
 '''
 
 
-mport pandas as pd
+import pandas as pd
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt

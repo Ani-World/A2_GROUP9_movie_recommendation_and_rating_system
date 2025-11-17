@@ -1,63 +1,55 @@
-
-'''
-File : recommend_by_cluster.py
-Work : This code provides movie recommendations based on clusters: it finds the cluster of a given movie (supports partial/case-insensitive input) and suggests other movies from the same cluster interactively.
-'''
-
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from difflib import get_close_matches
 
-# Load cluster assignments
-clusters_df = pd.read_csv('person2/plots/Cluster_Assignments.csv')
+DATA_PATH = r"C:\Users\Admin\OneDrive\Desktop\College work\AIML FINAL\AIML-Mini-project\person2\models\genre_name_mapping.csv"
 
-def recommend_movies_by_cluster(movie_name, top_n=5):
-    # Find movies containing the input string (case-insensitive)
-    matches = clusters_df[clusters_df['Name'].str.contains(movie_name, case=False, na=False)]
+df = pd.read_csv(DATA_PATH)
+
+# Combine Genre text with cluster id for richer feature
+df["GenreText"] = df["Genre"].fillna("").astype(str) + " cluster" + df["GenreCluster"].astype(str)
+
+tfidf = TfidfVectorizer(stop_words="english")
+tfidf_matrix = tfidf.fit_transform(df["GenreText"])
+cos_sim = cosine_similarity(tfidf_matrix)
+
+def recommend_by_genre(movie_query, top_n=5):
+    names = df["Name"].astype(str)
+    lowered = names.str.lower()
+    q = movie_query.strip().lower()
+
+    matches = df[lowered.str.contains(q, na=False)]
     if matches.empty:
-        print(f"No movies found matching '{movie_name}'")
-        return []
-    # Take the first match for recommendation
-    movie_name_exact = matches.iloc[0]['Name']
-    cluster_id = matches.iloc[0]['Cluster']
-    # Get other movies in the same cluster
-    cluster_movies = clusters_df[clusters_df['Cluster'] == cluster_id]
-    cluster_movies = cluster_movies[cluster_movies['Name'] != movie_name_exact]  # exclude input movie
-    recommended = cluster_movies['Name'].head(top_n).tolist()
-    return movie_name_exact, recommended
+        close = get_close_matches(q, lowered, n=1, cutoff=0.6)
+        if close:
+            matches = df[lowered == close[0]]
+    if matches.empty:
+        print(f"No movies found matching '{movie_query}'")
+        return None, []
 
+    idx = matches.index[0]
+    movie_name = df.loc[idx, "Name"]
+    sim_scores = list(enumerate(cos_sim[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+
+    top_indices = [i for i, _ in sim_scores[1 : top_n + 15]]
+    same_cluster = df.loc[idx, "GenreCluster"]
+    filtered = df.iloc[top_indices]
+    filtered = filtered[filtered["GenreCluster"] == same_cluster]
+    recs = filtered["Name"].unique().tolist()[:top_n]
+
+    return movie_name, recs
 
 if __name__ == "__main__":
-    movie = input("Enter a movie name (partial allowed): ").strip()
-    num_recs = input("How many recommendations do you want? (default 5): ").strip()
-    
+    q = input("Enter a movie name (partial allowed): ").strip()
     try:
-        num_recs = int(num_recs)
+        n = int(input("How many recommendations do you want? (default 5): ").strip() or 5)
     except:
-        num_recs = 5  # default
-    
-    movie_exact, recs = recommend_movies_by_cluster(movie, top_n=num_recs)
-    
+        n = 5
+
+    exact, recs = recommend_by_genre(q, top_n=n)
     if recs:
-        print(f"\nRecommendations based on '{movie_exact}':")
-        for i, r in enumerate(recs, start=1):
+        print(f"\n🎬 Recommendations similar to '{exact}':")
+        for i, r in enumerate(recs, 1):
             print(f"{i}. {r}")
-
-
-'''
-output : Enter a movie name (partial allowed): Love Story
-How many recommendations do you want? (default 5): 5
-
-Recommendations based on '1942: A Love Story':
-1. #Gadhvi (He thought he was Gandhi)
-2. #Yaaram
-3. ...Aur Pyaar Ho Gaya
-4. ...Yahaan
-5. ?: A Question Mark
-PS C:\Users\VAISHNAVI AHIRE\OneDrive\Desktop\AIML-Mini-project> 
-
-
-
-
-
-
-
-'''

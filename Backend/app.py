@@ -812,7 +812,7 @@ def add_to_watchlist():
 # Frontend routes (Absolute path)
 # -----------------------------
 # NOTE: The path provided by the user must be correct for these to work.
-FRONTEND_DIR =r"C:\Users\DELL\Projects\AIML-Mini-Project-semifinal\templates"
+FRONTEND_DIR =r"C:\Users\Admin\OneDrive\Desktop\College work\AIML FINAL\AIML-Mini-project\templates"
 
 @app.route('/')
 def serve_index():
