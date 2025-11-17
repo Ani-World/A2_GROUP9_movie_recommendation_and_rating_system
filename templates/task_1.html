@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzzy Prediction - Archiver</title>
+    <style>
+        /* Using the same dark theme as your other pages */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-link {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-link:hover {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        .form-card, .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .input-group input, .input-group .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .btn-submit {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+        }
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Result Display */
+        #resultSection {
+            display: none; /* Hidden by default */
+            text-align: center;
+        }
+        .result-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .result-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1.5rem;
+        }
+        .result-hit { color: #2ecc71; }
+        .result-flop { color: #e74c3c; }
+        
+        .result-confidence {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        
+        #errorMessage {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid #e74c3c;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+        }
+        #errorMessage ul {
+            padding-left: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Director's Fuzzy Predictor</h1>
+            <a class="btn-link" id="dashboardLink" href="dashboard.html">Back to Dashboard</a>
+        </div>
+
+        <div class="form-card">
+            <form id="predictForm">
+                <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 2rem;">
+                    Enter the details for a new movie. The system will use fuzzy matching to find the closest known entities and predict the movie's rating.
+                </p>
+                
+                <div class="input-group">
+                    <label for="director">Director (Required)</label>
+                    <input type="text" id="director" class="form-control" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="actor1">Actor 1 (Required)</label>
+                    <input type="text" id="actor1" class="form-control" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="actor2">Actor 2 (Optional)</label>
+                    <input type="text" id="actor2" class="form-control">
+                </div>
+                
+                <div class="input-group">
+                    <label for="actor3">Actor 3 (Optional)</label>
+                    <input type="text" id="actor3" class="form-control">
+                </div>
+                
+                <div class="input-group">
+                    <label for="genre">Genre (Required, comma-separated)</label>
+                    <input type="text" id="genre" class="form-control" placeholder="e.g., Action, Drama" required>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="btn-submit">Predict Rating</button>
+            </form>
+        </div>
+        
+        <!-- Result Section -->
+        <div class="result-card" id="resultSection">
+            <div id="errorMessage"></div>
+            
+            <div id="successResult">
+                <div id="resultLabel" class="result-label">Predicted Rating</div>
+                <div id="resultScore" classs="result-value">0.0</div>
+                <div id="resultHitFlop" class="result-value">HIT</div>
+                <div class="result-confidence">
+                    Confidence: <span id="resultConfidence">0%</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:5000";
+        
+        // --- Get UserID to set dashboard link ---
+        const urlParams = new URLSearchParams(window.location.search);
+        let userId = urlParams.get("user_id") || localStorage.getItem("current_user_id");
+        if (userId) {
+            document.getElementById("dashboardLink").href = `dashboard.html?user_id=${userId}`;
+        } else {
+            document.getElementById("dashboardLink").href = "login.html"; // Fallback to login
+        }
+
+        // --- Form Handling ---
+        const form = document.getElementById('predictForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultSection = document.getElementById('resultSection');
+        const errorMsg = document.getElementById('errorMessage');
+        const successResult = document.getElementById('successResult');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop page from reloading
+            
+            // UI state: Loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Predicting...";
+            resultSection.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            // 1. Get data from form
+            const payload = {
+                director: document.getElementById('director').value,
+                actor1: document.getElementById('actor1').value,
+                actor2: document.getElementById('actor2').value,
+                actor3: document.getElementById('actor3').value,
+                genre: document.getElementById('genre').value
+            };
+
+            try {
+                // 2. Send to API
+                const res = await fetch(`${API}/api/predict_fuzzy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // Handle 400 Bad Request (Invalid Inputs)
+                    throw data; // Throw error to be caught below
+                }
+                
+                // 3. Display Success
+                document.getElementById('resultScore').textContent = data.score.toFixed(1);
+                document.getElementById('resultHitFlop').textContent = data.label;
+                document.getElementById('resultConfidence').textContent = `${(data.confidence * 100).toFixed(0)}%`;
+                
+                // Set color for HIT/FLOP
+                const hitFlopEl = document.getElementById('resultHitFlop');
+                hitFlopEl.classList.remove('result-hit', 'result-flop');
+                if (data.label === 'HIT') {
+                    hitFlopEl.classList.add('result-hit');
+                } else {
+                    hitFlopEl.classList.add('result-flop');
+                }
+                
+                successResult.style.display = 'block';
+                resultSection.style.display = 'block';
+
+            } catch (err) {
+                // 4. Display Error
+                console.error("Prediction Error:", err);
+                let errorHtml = "<strong>Prediction failed.</strong>";
+                if (err.invalid_fields && err.invalid_fields.length > 0) {
+                    errorHtml += " The following fields could not be matched:<ul>";
+                    err.invalid_fields.forEach(field => {
+                        errorHtml += `<li>${field}</li>`;
+                    });
+                    errorHtml += "</ul><p>Please check spelling and try again.</p>";
+                } else {
+                    errorHtml += `<p>${err.error || "A network error occurred."}</p>`;
+                }
+                
+                errorMsg.innerHTML = errorHtml;
+                errorMsg.style.display = 'block';
+                successResult.style.display = 'none';
+                resultSection.style.display = 'block';
+            }
+            
+            // UI state: Reset button
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Predict Rating";
+        });
+    </script>
+</body>
+</html>
