@@ -1,5 +1,30 @@
-intermediate/
-.env/
-.vscode/
+# Ignore Python bytecode files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+
+# Ignore build and distribution directories
+build/
+dist/
+*.egg-info/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE / editor folders
+.vscode/
+.idea/
+
+# Ignore temporary files
+*.log
+*.tmp
