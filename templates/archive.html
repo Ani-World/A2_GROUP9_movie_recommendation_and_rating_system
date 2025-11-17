@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch History - Archiver</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Base styles from dashboard.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        .btn-logout {
+             background: rgba(255, 255, 255, 0.05);
+             border-color: rgba(255, 255, 255, 0.1);
+        }
+        .btn-logout:hover {
+            background: #e74c3c;
+        }
+        
+        /* Page-specific styles */
+        .page-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Frosted glass box for content */
+        .content-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-card h6 {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card .stat-unit {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+        .chart-container {
+            max-height: 350px;
+        }
+
+        /* Archive List */
+        .sort-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .sort-controls select {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        .sort-controls option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .archive-list-container {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column list */
+            gap: 1rem;
+        }
+        .archive-list-item {
+            display: flex;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
+        }
+        .archive-list-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+        .archive-list-poster {
+            width: 80px;
+            height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .archive-list-info {
+            flex-grow: 1;
+        }
+        .archive-list-info h5 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .archive-list-info small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        .archive-list-rating {
+            flex-shrink: 0;
+            text-align: right;
+        }
+        .archive-list-rating .rating-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        .archive-list-rating .avg-rating {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.25rem;
+        }
+        .empty-state { text-align: center; padding: 3rem; font-style: italic; }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; gap: 1rem; text-align: center; }
+            .analytics-grid { grid-template-columns: 1fr 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .archive-list-item { flex-direction: column; align-items: flex-start; }
+            .archive-list-rating { text-align: left; margin-top: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Your Watch History</h1>
+            <div>
+                <a class="btn" id="dashboardLink" href="#">Back to Dashboard</a>
+                <a class="btn btn-logout" href="index.html">Logout</a>
+            </div>
+        </div>
+
+        <!-- Analytics Cards -->
+        <div class="analytics-grid">
+            <div class="stat-card">
+                <h6>Total Watch Time</h6>
+                <div id="totalWatchTime" class="stat-value">—</div>
+                <small class="stat-unit" id="watchTimeUnit">minutes</small>
+            </div>
+            <div class="stat-card">
+                <h6>Movies Rated</h6>
+                <div id="moviesRated" class="stat-value">—</div>
+                <small class="stat-unit">&nbsp;</small> <!-- Placeholder for alignment -->
+            </div>
+            <div class="stat-card">
+                <h6>Average Rating</h6>
+                <div id="averageRating" class="stat-value">—</div>
+                <small class="stat-unit">out of 10</small>
+            </div>
+            <div class="stat-card">
+                <h6>Top Genre</h6>
+                <div id="topGenre" class="stat-value" style="font-size: 1.8rem;">—</div> <!-- Smaller font for text -->
+                <small class="stat-unit">&nbsp;</small>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-grid">
+            <div class="content-box">
+                <h5>Genre Distribution</h5>
+                <div class="chart-container">
+                    <canvas id="genreChart"></canvas>
+                </div>
+            </div>
+            <div class="content-box">
+                <h5>Rating Distribution (1-10)</h5>
+                <div class="chart-container">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watch History List -->
+        <div class="content-box">
+            <div class="sort-controls">
+                <label for="sortSelect">Sort by:</label>
+                <select id="sortSelect">
+                    <option value="recent">Most Recent</option>
+                    <option value="rating_desc">Your Rating (High-Low)</option>
+                    <option value="rating_asc">Your Rating (Low-High)</option>
+                    <option value="year">Year (Newest)</option>
+                </select>
+            </div>
+            <div id="watchHistoryContainer" class="archive-list-container">
+                <p class="empty-state">Loading watch history...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://127.0.0.1:5000';
+        let userId = null;
+        let fullArchive = []; // Store the full list for sorting
+
+        function getUserId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('user_id');
+            if (!id) id = localStorage.getItem('current_user_id');
+            return id;
+        }
+
+        // --- Analytics Loader ---
+        async function loadAnalytics() {
+            try {
+                // NOTE: Your backend analytics endpoint hasn't been created.
+                // This is a placeholder. We will use the archive data instead.
+                // const res = await fetch(`${API}/api/user/analytics?user_id=${userId}`);
+                // const data = await res.json();
+                
+                // --- MOCKING ANALYTICS from archive data ---
+                if (fullArchive.length === 0) {
+                     document.getElementById('moviesRated').innerText = 0;
+                     document.getElementById('averageRating').innerText = 'N/A';
+                     document.getElementById('topGenre').innerText = 'N/A';
+                     return;
+                }
+
+                // 1. Movies Rated
+                document.getElementById('moviesRated').innerText = fullArchive.length;
+
+                // 2. Average Rating
+                const totalRating = fullArchive.reduce((acc, mov) => acc + (mov.user_rating || 0), 0);
+                const avgRating = totalRating / fullArchive.length;
+                document.getElementById('averageRating').innerText = avgRating.toFixed(1);
+
+                // 3. Watch Time (Cannot be calculated from archive, needs duration. Skipping)
+                document.getElementById('totalWatchTime').innerText = 'N/A';
+                document.getElementById('watchTimeUnit').innerText = 'Data not available';
+                
+                // 4. Genre & Rating Distribution (Mocked)
+                // To implement this fully, /api/user/archive would need to return genre data
+                document.getElementById('topGenre').innerText = 'Action'; // Placeholder
+                
+                renderGenreChart(['Action', 'Comedy', 'Drama', 'Thriller'], [5, 3, 2, 1]); // Mock data
+                renderRatingChart(fullArchive);
+
+            } catch(e) {
+                console.error('Error loading analytics:', e);
+            }
+        }
+        
+        function renderGenreChart(labels, counts) {
+             const ctx = document.getElementById('genreChart').getContext('2d');
+             if(window.genreChart) window.genreChart.destroy();
+             window.genreChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Movies', data: counts,
+                        backgroundColor: 'rgba(106, 17, 203, 0.6)',
+                        borderColor: 'rgba(106, 17, 203, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { color: 'white', stepSize: 1 } }, x: { ticks: { color: 'white' } } },
+                    plugins: { legend: { display: false } }
+                }
+             });
+        }
+        
+        function renderRatingChart(movies) {
+            const ratingCounts = { '1-2': 0, '3-4': 0, '5-6': 0, '7-8': 0, '9-10': 0 };
+            movies.forEach(m => {
+                const r = m.user_rating;
+                if (r <= 2) ratingCounts['1-2']++;
+                else if (r <= 4) ratingCounts['3-4']++;
+                else if (r <= 6) ratingCounts['5-6']++;
+                else if (r <= 8) ratingCounts['7-8']++;
+                else if (r <= 10) ratingCounts['9-10']++;
+            });
+            
+            const ctx = document.getElementById('ratingChart').getContext('2d');
+            if(window.ratingChart) window.ratingChart.destroy();
+            window.ratingChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(ratingCounts),
+                    datasets: [{
+                        data: Object.values(ratingCounts),
+                        backgroundColor: ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#2575fc']
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: 'white' } } }
+                }
+            });
+        }
+
+        // --- Watch History Loader ---
+        async function loadWatchHistory() {
+            try {
+                const res = await fetch(`${API}/api/user/archive?user_id=${userId}`);
+                if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+                
+                const data = await res.json();
+                fullArchive = data.archived || []; // Store in global
+                
+                if (fullArchive.length === 0) {
+                    document.getElementById('watchHistoryContainer').innerHTML = 
+                        '<p class="empty-state">No movies rated yet. <a href="dashboard.html?user_id=${userId}">Go to dashboard</a> to start rating movies!</p>';
+                    return;
+                }
+                
+                // Initial render
+                sortAndRenderMovies('recent');
+                
+                // Sort handler
+                document.getElementById('sortSelect').addEventListener('change', (e) => {
+                    sortAndRenderMovies(e.target.value);
+                });
+                
+            } catch(e) {
+                console.error('Error loading watch history:', e);
+                document.getElementById('watchHistoryContainer').innerHTML = 
+                    `<p class="empty-state" style="color: #e74c3c;">Error loading watch history. ${e.message}</p>`;
+            }
+        }
+
+        function sortAndRenderMovies(sortBy) {
+            const sorted = [...fullArchive];
+            switch(sortBy) {
+                case 'rating_desc':
+                    sorted.sort((a, b) => (b.user_rating || 0) - (a.user_rating || 0));
+                    break;
+                case 'rating_asc':
+                    sorted.sort((a, b) => (a.user_rating || 0) - (b.user_rating || 0));
+                    break;
+                case 'year':
+                    sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+                    break;
+                case 'recent':
+                default:
+                    // 'fullArchive' is already sorted by recent (by default from API)
+                    break;
+            }
+            renderMovies(sorted);
+        }
+
+        function renderMovies(movies) {
+            const container = document.getElementById('watchHistoryContainer');
+            container.innerHTML = ''; // Clear
+            
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'archive-list-item';
+                
+                card.innerHTML = `
+                    <img src="${movie.poster || 'https://via.placeholder.com/80x120/333/fff?text=N/A'}" 
+                         class="archive-list-poster" 
+                         alt="${movie.name}">
+                    <div class="archive-list-info">
+                        <h5>${movie.name}</h5>
+                        <small>${movie.year} • ${movie.duration} min</small>
+                        <div style="margin-top: 0.5rem;">
+                            <!-- This is just a placeholder, as movie_detail.html is not created -->
+                            <a href="#" class="btn" style="padding: 5px 10px; font-size: 0.9rem;"
+                               onclick="alert('This would link to the movie detail page.')">View Details</a>
+                        </div>
+                    </div>
+                    <div class="archive-list-rating">
+                        <span class="rating-badge">
+                            ${movie.user_rating ? movie.user_rating.toFixed(1) : 'N/A'} / 10
+                        </span>
+                        <div class="avg-rating">Public: ${movie.rating ? movie.rating.toFixed(1) : 'N/A'} / 10</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Initial Load ---
+        (async () => {
+            userId = getUserId();
+            if (!userId) {
+                document.getElementById('watchHistoryContainer').innerHTML = '<p class="empty-state">User ID not found. Please log in.</p>';
+                return;
+            }
+            document.getElementById('dashboardLink').href = `dashboard.html?user_id=${userId}`;
+            
+            // Load history first, so analytics can use the data
+            await loadWatchHistory();
+            await loadAnalytics(); // Now call analytics
+        })();
+    </script>
+</body>
+</html>

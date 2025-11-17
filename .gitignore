@@ -1,0 +1,5 @@
+intermediate/
+.env/
+.vscode/
+__pycache__/
+*.pyc

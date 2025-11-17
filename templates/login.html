@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Archiever</title>
+    <title>Login - Archiver</title>
     <style>
       * {
         margin: 0;
@@ -111,22 +111,26 @@
       }
 
       .msg {
-        margin: 20px 0;
+        margin-top: 20px; /* Changed margin-bottom to margin-top */
         padding: 12px;
         border-radius: 8px;
         font-weight: 500;
+        /* Hide by default */
+        display: none; 
       }
 
       .success {
         background-color: #e8f5e9;
         color: #2e7d32;
         border: 1px solid #c8e6c9;
+        display: block; /* Show when class is added */
       }
 
       .error {
         background-color: #ffebee;
         color: #c62828;
         border: 1px solid #ffcdd2;
+        display: block; /* Show when class is added */
       }
 
       .back-link {
@@ -194,7 +198,7 @@
         <a href="index.html" class="back-link">← Back to Home</a>
       </div>
 
-      <p class="footer-text">Secure Login &copy; 2023</p>
+      <p class="footer-text">Secure Login &copy; 2025</p>
     </div>
 
     <script>
@@ -206,7 +210,7 @@
           e.preventDefault();
           const msgElement = document.getElementById("msg");
           msgElement.textContent = "";
-          msgElement.className = "msg";
+          msgElement.className = "msg"; // Reset classes
 
           const body = {
             email: document.getElementById("email").value,
@@ -222,11 +226,18 @@
 
             const data = await res.json();
 
-            if (res.ok && data.access_token) {
+            // --- EDITED SECTION ---
+
+            // 1. Check for 'user_id' instead of 'access_token'
+            if (res.ok && data.user_id) {
+              const userId = data.user_id;
+
               msgElement.textContent =
-                "Login successful! Redirecting to onboarding...";
+                "Login successful! Redirecting to dashboard..."; // 2. Update message
               msgElement.className = "msg success";
-              localStorage.setItem("access_token", data.access_token);
+              
+              // 3. Store the user_id in localStorage
+              localStorage.setItem("current_user_id", userId);
 
               // Create countdown element
               const countdownElement = document.createElement("div");
@@ -234,14 +245,7 @@
               countdownElement.textContent = "Redirecting in 3 seconds...";
               msgElement.appendChild(countdownElement);
 
-              // demo: call protected profile and log it
-              // const profileRes = await fetch(`${API}/api/user/profile`, {
-              //   headers: { Authorization: "Bearer " + data.access_token },
-              // });
-              // const profile = await profileRes.json();
-              // console.log("profile:", profile);
-
-              // Countdown and redirect to onboarding
+              // Countdown and redirect to dashboard
               let countdown = 3;
               const countdownInterval = setInterval(() => {
                 countdown--;
@@ -251,17 +255,21 @@
 
                 if (countdown <= 0) {
                   clearInterval(countdownInterval);
-                  window.location.href = "onboarding.html";
+                  // 4. Redirect to dashboard with the user_id
+                  window.location.href = `dashboard.html?user_id=${userId}`; 
                 }
               }, 1000);
+            
+            // --- END OF EDITED SECTION ---
+
             } else {
-              msgElement.textContent = data.error || JSON.stringify(data);
+              msgElement.textContent = data.error || "Login failed. Please check credentials.";
               msgElement.className = "msg error";
             }
             console.log("login response", res.status, data);
           } catch (err) {
             console.error(err);
-            msgElement.textContent = "Network error";
+            msgElement.textContent = "Network error. Server may be down.";
             msgElement.className = "msg error";
           }
         });

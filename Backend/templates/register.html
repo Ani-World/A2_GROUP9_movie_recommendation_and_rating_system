@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Archiever</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .register-container {
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+      }
+
+      .register-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        padding: 40px 30px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .register-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      h2 {
+        color: #333;
+        margin-bottom: 30px;
+        font-weight: 600;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+      }
+
+      input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      input:focus {
+        border-color: #6a11cb;
+        box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        outline: none;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 15px rgba(106, 17, 203, 0.3);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .msg {
+        margin: 20px 0;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+
+      .success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+      }
+
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+
+      .back-link {
+        margin-top: 20px;
+        display: inline-block;
+        color: #666;
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .back-link:hover {
+        color: #6a11cb;
+      }
+
+      .footer-text {
+        margin-top: 30px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+      }
+
+      .optional {
+        color: #888;
+        font-size: 0.9em;
+        font-weight: normal;
+      }
+
+      .user-id-display {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin: 15px 0;
+        text-align: center;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .register-card {
+          padding: 30px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="register-container">
+      <div class="register-card">
+        <div class="logo">A</div>
+        <h2>Create Account</h2>
+
+        <form id="regForm">
+          <div class="input-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="name"
+              >Name <span class="optional">(optional)</span></label
+            >
+            <input type="text" id="name" placeholder="Enter your name" />
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Create a password"
+              required
+            />
+          </div>
+
+          <div id="userIdDisplay" class="user-id-display" style="display: none">
+            Your User ID: <span id="generatedUserId"></span>
+          </div>
+
+          <button type="submit" id="submitBtn">
+            <span id="btnText">Register</span>
+            <div
+              id="btnSpinner"
+              class="loading-spinner"
+              style="display: none"
+            ></div>
+          </button>
+        </form>
+
+        <div id="msg" class="msg"></div>
+
+        <a href="index.html" class="back-link">← Back to Home</a>
+      </div>
+
+      <p class="footer-text">Secure Registration &copy; 2023</p>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:5000";
+
+      document
+        .getElementById("regForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const msgElement = document.getElementById("msg");
+          const submitBtn = document.getElementById("submitBtn");
+          const btnText = document.getElementById("btnText");
+          const btnSpinner = document.getElementById("btnSpinner");
+          const userIdDisplay = document.getElementById("userIdDisplay");
+          const generatedUserId = document.getElementById("generatedUserId");
+
+          msgElement.textContent = "";
+          msgElement.className = "msg";
+
+          // Show loading state
+          submitBtn.disabled = true;
+          btnText.textContent = "Registering...";
+          btnSpinner.style.display = "inline-block";
+
+          const body = {
+            email: document.getElementById("email").value,
+            name: document.getElementById("name").value,
+            password: document.getElementById("password").value,
+            // REMOVED: user_id is no longer sent to backend - backend will auto-generate it
+          };
+
+          try {
+            const res = await fetch(`${API}/api/auth/register`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+              // Use the user ID from backend response (NOT our generated one)
+              const userId = data.user_id;
+              generatedUserId.textContent = userId;
+              userIdDisplay.style.display = "block";
+
+              msgElement.textContent =
+                "Registered successfully! Redirecting to onboarding...";
+              msgElement.className = "msg success";
+
+              // Store user ID and token in localStorage for onboarding
+              localStorage.setItem("current_user_id", userId);
+              localStorage.setItem("access_token", data.access_token);
+              localStorage.setItem("user_email", body.email);
+
+              // Redirect to onboarding after short delay
+              setTimeout(() => {
+                window.location.href = `onboarding.html?user_id=${userId}`;
+              }, 1500);
+            } else {
+              msgElement.textContent = data.error || JSON.stringify(data);
+              msgElement.className = "msg error";
+
+              // Reset button state on error
+              submitBtn.disabled = false;
+              btnText.textContent = "Register";
+              btnSpinner.style.display = "none";
+            }
+            console.log("register response", res.status, data);
+          } catch (err) {
+            console.error(err);
+            msgElement.textContent = "Network error";
+            msgElement.className = "msg error";
+
+            // Reset button state on error
+            submitBtn.disabled = false;
+            btnText.textContent = "Register";
+            btnSpinner.style.display = "none";
+          }
+        });
+    </script>
+  </body>
+</html>

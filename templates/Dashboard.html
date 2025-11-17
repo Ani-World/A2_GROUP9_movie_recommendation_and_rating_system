@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archiever - Dashboard</title>
+    <title>Archiver - Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -83,6 +83,8 @@
             color: white;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none; /* Added for links */
+            display: inline-block; /* Added for links */
         }
 
         .nav-btn.active, .nav-btn:hover {
@@ -140,6 +142,10 @@
             color: #6a11cb;
             cursor: pointer;
             font-weight: 500;
+            text-decoration: none; /* Added for links */
+        }
+        .see-all:hover {
+            text-decoration: underline;
         }
 
         .carousel-container {
@@ -412,6 +418,7 @@
 
         .modal-poster img {
             max-width: 300px;
+            width: 100%;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
@@ -565,24 +572,23 @@
     <div class="dashboard-container">
         <header class="dashboard-header">
             <div class="header-content">
-                <h1>Welcome to Archiever</h1>
+                <h1>Welcome to Archiver</h1>
                 <p>Your personal movie recommendation engine</p>
             </div>
             <div class="user-info">
                 <div class="user-avatar">U</div>
                 <div>
-                    <div id="userEmail">user@example.com</div>
-                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7)">User ID: <span id="userIdDisplay">123</span></div>
+                    <!-- This will be filled by JS -->
+                    <div id="userEmail"></div> 
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7)">User ID: <span id="userIdDisplay">...</span></div>
                 </div>
             </div>
         </header>
 
         <nav class="dashboard-nav">
             <button class="nav-btn active">Dashboard</button>
-            <button class="nav-btn">Discover</button>
-            <button class="nav-btn">My Watchlist</button>
-            <button class="nav-btn">Ratings</button>
-            <button class="nav-btn">Settings</button>
+            <!-- UPDATED: Changed to an <a> tag -->
+            <a href="#" id="navWatchlistBtn" class="nav-btn">My Watchlist</a>
         </nav>
 
         <main id="dashboardMain">
@@ -635,7 +641,8 @@
                 <section class="archive-section">
                     <div class="section-header">
                         <h3 class="section-title">Your Watch History</h3>
-                        <span class="see-all">View all</span>
+                        <!-- UPDATED: Changed to an <a> tag -->
+                        <a href="#" id="seeAllArchiveBtn" class="see-all">View all</a>
                     </div>
                     <div class="archive-grid" id="archiveGrid">
                         <!-- Archive items will be populated here -->
@@ -646,17 +653,7 @@
                     <h2>Your Rating Analytics</h2>
                     <div class="bar-chart-container">
                         <svg class="bar-chart" id="analyticsChart">
-                            <defs>
-                                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#6a11cb" />
-                                    <stop offset="100%" stop-color="#2575fc" />
-                                </linearGradient>
-                                <linearGradient id="barGradientHover" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#7d2cff" />
-                                    <stop offset="100%" stop-color="#3d8cff" />
-                                </linearGradient>
-                            </defs>
-                            <!-- Chart bars will be drawn here -->
+                            <!-- Gradients will be injected by JS -->
                         </svg>
                     </div>
                 </section>
@@ -691,8 +688,8 @@
                         </div>
                     </div>
                     <div class="modal-actions">
-                        <button class="btn-primary">Add to Watchlist</button>
-                        <button class="btn-secondary">Rate This Movie</button>
+                        <button class="btn-primary" id="modalWatchlistBtn">Add to Watchlist</button>
+                        <button class="btn-secondary" id="modalRateBtn">Rate This Movie</button>
                     </div>
                 </div>
             </div>
@@ -710,6 +707,7 @@
     let trending = [];
     let archive = [];
     let userId = null;
+    let currentModalMovieId = null; // Store movie ID for modal actions
 
     // DOM elements
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -717,10 +715,14 @@
     const userIdDisplay = document.getElementById('userIdDisplay');
     const movieModal = document.getElementById('movieModal');
     const closeModal = document.getElementById('closeModal');
+    const navWatchlistBtn = document.getElementById('navWatchlistBtn');
+    const modalWatchlistBtn = document.getElementById('modalWatchlistBtn');
+    const modalRateBtn = document.getElementById('modalRateBtn');
+    const seeAllArchiveBtn = document.getElementById('seeAllArchiveBtn');
+
 
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function() {
-        // Get user ID from localStorage or URL parameter
         userId = getUserId();
         if (!userId) {
             alert('User ID not found. Please log in again.');
@@ -728,34 +730,51 @@
             return;
         }
         
+        localStorage.setItem('current_user_id', userId); 
         userIdDisplay.textContent = userId;
+        // Optionally display email if stored in localStorage from registration
+        document.getElementById('userEmail').textContent = localStorage.getItem('current_user_email') || 'Welcome, User';
+
         fetchAllData();
         
-        // Set up modal close event
+        // Modal close events
         closeModal.addEventListener('click', closeMovieModal);
         movieModal.addEventListener('click', function(e) {
             if (e.target === movieModal) {
                 closeMovieModal();
             }
         });
+
+        // --- UPDATED: "My Watchlist" Button Link ---
+        navWatchlistBtn.href = `watchlist.html?user_id=${userId}`;
+
+        // --- UPDATED: "See All" Archive Link ---
+        if (seeAllArchiveBtn) {
+            seeAllArchiveBtn.href = `archive.html?user_id=${userId}`;
+        }
     });
 
     // Get user ID from localStorage or URL
     function getUserId() {
         const urlParams = new URLSearchParams(window.location.search);
         let id = urlParams.get('user_id');
-        if (!id) id = localStorage.getItem('user_id');
+        if (!id) id = localStorage.getItem('current_user_id'); // Match login.html
         return id;
     }
 
     // Fetch all dashboard data
     async function fetchAllData() {
         try {
+            loadingIndicator.style.display = 'flex'; // Show loader
+            recommendationsContent.style.display = 'none'; // Hide content
+
             const q = `?user_id=${userId}&n=20`;
             const recRes = await fetch(`${API}/api/recommendations${q}`);
+            if (!recRes.ok) throw new Error(`Recommendations fetch failed: ${recRes.status}`);
             const recJson = await recRes.json();
             const items = recJson.items || recJson.recommendations || [];
 
+            // Simulate different carousels
             topPicks = items.slice(0, 6);
             becauseX = items.filter((_, i) => i % 5 === 0).slice(0, 6);
             similar = items.filter((_, i) => i % 5 === 1).slice(0, 6);
@@ -763,8 +782,9 @@
 
             try {
                 const archRes = await fetch(`${API}/api/user/archive?user_id=${userId}`);
+                if (!archRes.ok) throw new Error(`Archive fetch failed: ${archRes.status}`);
                 const archJson = await archRes.json();
-                archive = archJson.archive || [];
+                archive = archJson.archived || []; // Key from app.py
             } catch (e) {
                 console.error('Error fetching archive:', e);
                 archive = [];
@@ -773,7 +793,7 @@
             renderDashboard();
         } catch (e) {
             console.error('Dashboard fetch error', e);
-            loadingIndicator.innerHTML = '<p>Error loading recommendations. Please try again.</p>';
+            loadingIndicator.innerHTML = `<p>Error loading recommendations. Please try again. (${e.message})</p>`;
         }
     }
 
@@ -786,13 +806,14 @@
         populateCarousel('similarCarousel', similar);
         populateCarousel('trendingCarousel', trending);
         populateArchive('archiveGrid', archive);
-        renderBarChart(topPicks.slice(0, 6));
+        renderBarChart(topPicks.slice(0, 6)); // Placeholder analytics
     }
 
     // Populate carousel
     function populateCarousel(carouselId, items) {
         const carousel = document.getElementById(carouselId);
-        if (items.length === 0) {
+        if (!carousel) return;
+        if (!items || items.length === 0) {
             carousel.innerHTML = '<div class="empty-state">No recommendations available</div>';
             return;
         }
@@ -828,13 +849,21 @@
     // Populate archive
     function populateArchive(archiveId, items) {
         const archiveGrid = document.getElementById(archiveId);
-        if (items.length === 0) {
+        if (!archiveGrid) return;
+        
+        // Sort items by user_rating (desc) for display
+        const sortedItems = [...items].sort((a, b) => (b.user_rating || 0) - (a.user_rating || 0));
+        
+        // Take only the top 6 for the dashboard preview
+        const previewItems = sortedItems.slice(0, 6); 
+
+        if (!previewItems || previewItems.length === 0) {
             archiveGrid.innerHTML = '<div class="empty-state">Your archive is empty</div>';
             return;
         }
 
         archiveGrid.innerHTML = '';
-        items.forEach(item => {
+        previewItems.forEach(item => {
             const archiveItem = document.createElement('div');
             archiveItem.className = 'archive-item';
             archiveItem.addEventListener('click', () => openMovie(item.movie_id));
@@ -856,28 +885,39 @@
     // Open movie modal
     async function openMovie(movieId) {
         try {
+            currentModalMovieId = movieId; 
+
             const m = await fetch(`${API}/api/movie/${movieId}`);
+            if (!m.ok) throw new Error(`Movie metadata fetch failed: ${m.status}`);
             const meta = await m.json();
+            
             const p = await fetch(`${API}/api/predict?user_id=${userId}&movie_id=${movieId}`);
+            if (!p.ok) throw new Error(`Prediction fetch failed: ${p.status}`);
             const pred = await p.json();
 
             document.getElementById('modalPoster').src = meta.poster || 'https://via.placeholder.com/300x450/333/fff?text=No+Poster';
-            document.getElementById('modalTitle').textContent = meta.name || 'Unknown';
+            document.getElementById('modalTitle').textContent = meta.Name || 'Unknown';
             document.getElementById('modalYear').textContent = meta.year || '—';
             document.getElementById('modalDuration').textContent = `${meta.duration || '—'} min`;
-            document.getElementById('modalRating').textContent = meta.rating || 'N/A';
-            document.getElementById('modalVotes').textContent = meta.votes || 0;
-            document.getElementById('modalPredictedRating').textContent = pred.predicted_rating || 'N/A';
-            document.getElementById('modalConfidence').textContent = pred.confidence || 'N/A';
+            document.getElementById('modalRating').textContent = meta.Rating || 'N/A'; // This is public rating
+            document.getElementById('modalVotes').textContent = meta.Votes || 0;
+            
+            // FIX: Use ?? to allow 0 as a valid prediction
+            document.getElementById('modalPredictedRating').textContent = pred.predicted_rating ?? 'N/A';
+            document.getElementById('modalConfidence').textContent = pred.confidence ?? 'N/A';
 
-            document.querySelector('.btn-secondary').onclick = () => {
+            modalRateBtn.onclick = () => {
                 const ratingValue = prompt("Rate this movie (1–10):");
                 const numeric = parseFloat(ratingValue);
                 if (!isNaN(numeric) && numeric >= 1 && numeric <= 10) {
-                    rateMovie(movieId, numeric);
+                    rateMovie(currentModalMovieId, numeric);
                 } else {
                     alert("Please enter a valid rating between 1 and 10.");
                 }
+            };
+
+            modalWatchlistBtn.onclick = () => {
+                addToWatchlist(currentModalMovieId);
             };
 
             movieModal.style.display = 'flex';
@@ -885,9 +925,37 @@
             console.log('predicted rating', pred);
         } catch (error) {
             console.error('Error fetching movie details:', error);
-            alert('Error loading movie details. Please try again.');
+            alert(`Error loading movie details. Please try again. (${error.message})`);
         }
     }
+
+    // Add to Watchlist function
+    async function addToWatchlist(movieId) {
+        if (!userId) {
+            alert("User ID not found. Please log in again.");
+            return;
+        }
+        try {
+            const res = await fetch(`${API}/api/watchlist/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: parseInt(userId),
+                    movie_id: parseInt(movieId)
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message || `Movie added to watchlist!`);
+            } else {
+                alert(`Error: ${data.error || "Could not add to watchlist."}`);
+            }
+        } catch (err) {
+            console.error("Error adding to watchlist:", err);
+            alert("Network error. Could not add to watchlist.");
+        }
+    }
+
 
     // Handle rating
     async function rateMovie(movieId, ratingValue) {
@@ -900,31 +968,75 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user_id: userId,
-                    movie_id: movieId,
+                    user_id: parseInt(userId),
+                    movie_id: parseInt(movieId),
                     rating: ratingValue
                 })
             });
 
             const data = await res.json();
-            if (res.ok) alert(`Rated ${ratingValue} successfully!`);
-            else alert(`${data.error || "Rating failed."}`);
+            if (res.ok) {
+                alert(`Rated ${ratingValue} successfully!`);
+                // --- FIX: Update archive UI immediately ---
+                updateArchiveUI(movieId, ratingValue);
+                
+                // --- FIX: Re-fetch recommendations after rating ---
+                loadingIndicator.style.display = 'flex';
+                recommendationsContent.style.display = 'none';
+                await fetchAllData();
+                
+            } else {
+                alert(`${data.error || "Rating failed."}`);
+            }
         } catch (err) {
             console.error("Error rating movie:", err);
             alert("Error rating movie.");
         }
     }
 
+    // Helper to update archive UI after rating
+    async function updateArchiveUI(movieId, ratingValue) {
+        let existingItem = archive.find(item => item.movie_id === movieId);
+        
+        if (existingItem) {
+            existingItem.user_rating = ratingValue;
+        } else {
+            try {
+                const m = await fetch(`${API}/api/movie/${movieId}`);
+                if (!m.ok) throw new Error("Failed to fetch movie metadata");
+                const meta = await m.json();
+                
+                archive.unshift({
+                    movie_id: meta.movie_id,
+                    name: meta.Name,
+                    year: meta.year,
+                    poster: meta.poster,
+                    user_rating: ratingValue
+                });
+
+            } catch (e) {
+                console.error("Could not fetch metadata for archive update:", e);
+                return; 
+            }
+        }
+        
+        populateArchive('archiveGrid', archive);
+    }
+
+
     // Close modal
     function closeMovieModal() {
         movieModal.style.display = 'none';
+        currentModalMovieId = null; // Clear the stored ID
     }
 
     // Render bar chart
     function renderBarChart(data) {
         const svg = document.getElementById('analyticsChart');
-        svg.innerHTML = '';
-        const defs = document.createElement('defs');
+        if (!svg) return;
+        svg.innerHTML = ''; // Clear previous
+        
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
         defs.innerHTML = `
             <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#6a11cb" />
@@ -938,7 +1050,13 @@
         svg.appendChild(defs);
 
         if (!data || data.length === 0) {
-            svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="rgba(255,255,255,0.6)">No chart data available</text>';
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', '50%');
+            text.setAttribute('y', '50%');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('fill', 'rgba(255,255,255,0.6)');
+            text.textContent = 'No chart data available';
+            svg.appendChild(text);
             return;
         }
 
@@ -946,17 +1064,35 @@
         const barWidth = 80, spacing = 20;
 
         data.forEach((d, i) => {
-            const val = (parseFloat(d.rating || 0) / max) * 120;
+            const val = (parseFloat(d.rating || 0) / max) * 120; // 120px max height
             const x = i * (barWidth + spacing) + spacing;
-            const barGroup = document.createElement('g');
-            barGroup.className = 'bar-group';
-            barGroup.innerHTML = `
-                <rect x="${x}" y="${180 - val}" width="${barWidth}" height="${val}" rx="6" class="bar"/>
-                <text x="${x + barWidth/2}" y="195" class="bar-label">
-                    ${d.name.length > 10 ? d.name.substring(0, 10) + '...' : d.name}
-                </text>
-                <text x="${x + barWidth/2}" y="${175 - val}" class="bar-value">${d.rating}</text>
-            `;
+            
+            const barGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            barGroup.setAttribute('class', 'bar-group');
+            
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', String(x));
+            rect.setAttribute('y', String(180 - val));
+            rect.setAttribute('width', String(barWidth));
+            rect.setAttribute('height', String(val));
+            rect.setAttribute('rx', "6");
+            rect.setAttribute('class', 'bar');
+            
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', String(x + barWidth/2));
+            label.setAttribute('y', "195");
+            label.setAttribute('class', 'bar-label');
+            label.textContent = d.name.length > 10 ? d.name.substring(0, 10) + '...' : d.name;
+
+            const valueText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            valueText.setAttribute('x', String(x + barWidth/2));
+            valueText.setAttribute('y', String(175 - val));
+            valueText.setAttribute('class', 'bar-value');
+            valueText.textContent = d.rating;
+
+            barGroup.appendChild(rect);
+            barGroup.appendChild(label);
+            barGroup.appendChild(valueText);
             svg.appendChild(barGroup);
         });
     }

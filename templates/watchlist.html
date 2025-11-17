@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Watchlist - Archiver</title>
+    <!-- Simple dark theme to match -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .movie-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .movie-card:hover { transform: translateY(-5px); }
+        .movie-poster { width: 100%; height: 280px; object-fit: cover; }
+        .movie-info { padding: 1rem; }
+        .movie-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .movie-year { font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        .empty-state { text-align: center; padding: 3rem; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>My Watchlist</h1>
+            <a href="#" id="dashboardLink" class="btn">Back to Dashboard</a>
+        </div>
+
+        <div class="grid-container" id="watchlistGrid">
+            <p class="empty-state">Loading your watchlist...</p>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://127.0.0.1:5000';
+        let userId = null;
+
+        function getUserId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('user_id');
+            if (!id) id = localStorage.getItem('current_user_id');
+            return id;
+        }
+
+        async function fetchWatchlist() {
+            if (!userId) {
+                document.getElementById('watchlistGrid').innerHTML = '<p class="empty-state">User ID not found. Please log in.</p>';
+                return;
+            }
+            
+            // Set dashboard link
+            document.getElementById('dashboardLink').href = `dashboard.html?user_id=${userId}`;
+
+            try {
+                const res = await fetch(`${API}/api/watchlist?user_id=${userId}`);
+                if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+                
+                const data = await res.json();
+                renderWatchlist(data.watchlist || []);
+            } catch (err) {
+                console.error("Error fetching watchlist:", err);
+                document.getElementById('watchlistGrid').innerHTML = `<p class="empty-state">Error loading watchlist. ${err.message}</p>`;
+            }
+        }
+
+        function renderWatchlist(movies) {
+            const grid = document.getElementById('watchlistGrid');
+            if (movies.length === 0) {
+                grid.innerHTML = '<p class="empty-state">Your watchlist is empty.</p>';
+                return;
+            }
+
+            grid.innerHTML = ''; // Clear loading state
+            movies.forEach(item => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                // Optional: Make cards clickable to movie detail page
+                // movieCard.style.cursor = 'pointer';
+                // movieCard.addEventListener('click', () => {
+                //    window.location.href = `movie_detail.html?movie_id=${item.movie_id}&user_id=${userId}`;
+                // });
+
+                movieCard.innerHTML = `
+                    <img src="${item.poster}" alt="${item.name}" class="movie-poster" 
+                         onerror="this.src='https://via.placeholder.com/200x280/333/fff?text=No+Poster'">
+                    <div class="movie-info">
+                        <h4 class="movie-title">${item.name || 'Unknown'}</h4>
+                        <div class="movie-year">${item.year || '—'}</div>
+                    </div>
+                `;
+                grid.appendChild(movieCard);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            userId = getUserId();
+            fetchWatchlist();
+        });
+    </script>
+
+</body>
+</html>

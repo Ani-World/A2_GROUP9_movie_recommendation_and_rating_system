@@ -1,152 +1,98 @@
-# import sqlite3
-# import requests
-# import time
-# from itertools import cycle
-
-# # === 1. Database ===
-# DB_PATH = "instance/movies.db"
-
-# # === 2. Your OMDB API keys (replace with your actual keys) ===
-# OMDB_KEYS = [
-#     "",
-#     "",
-#     "",
-#     "",
-# ]
-
-# # Rotate keys infinitely
-# api_keys = cycle(OMDB_KEYS)
-
-# # === 3. Helper function to fetch poster ===
-# def fetch_poster(movie_name, api_key):
-#     url = "https://www.omdbapi.com/"
-#     try:
-#         response = requests.get(url, params={"t": movie_name, "apikey": api_key}, timeout=5)
-#         data = response.json()
-#         poster = data.get("Poster")
-#         if poster and poster != "N/A":
-#             return poster
-#     except Exception as e:
-#         print(f"⚠️ Error fetching '{movie_name}': {e}")
-#     # fallback placeholder
-#     return f"https://via.placeholder.com/300x420/1a1a2e/ffffff?text={movie_name.replace(' ', '+')}"
-
-# # === 4. Update movies in batches of 1000 ===
-# BATCH_SIZE = 1000
-
-# def update_posters():
-#     conn = sqlite3.connect(DB_PATH)
-#     cursor = conn.cursor()
-
-#     # Count total movies
-#     cursor.execute("SELECT COUNT(*) FROM movies")
-#     total_movies = cursor.fetchone()[0]
-#     print(f"Total movies in DB: {total_movies}")
-
-#     for offset in range(0, total_movies, BATCH_SIZE):
-#         cursor.execute(
-#             "SELECT movie_id, name, poster_url FROM movies ORDER BY movie_id LIMIT ? OFFSET ?",
-#             (BATCH_SIZE, offset)
-#         )
-#         batch = cursor.fetchall()
-#         print(f"Processing batch {offset} → {offset + len(batch)}")
-
-#         for movie_id, name, poster_url in batch:
-#             # Skip if already has a valid poster
-#             if poster_url and poster_url.strip() != "" and "placeholder.com" not in poster_url:
-#                 continue
-
-#             key = next(api_keys)
-#             poster = fetch_poster(name, key)
-
-#             cursor.execute(
-#                 "UPDATE movies SET poster_url = ? WHERE movie_id = ?",
-#                 (poster, movie_id)
-#             )
-
-#             # Optional: small delay to avoid hammering API
-#             time.sleep(0.2)
-
-#         conn.commit()
-#         print(f"✅ Batch {offset} → {offset + len(batch)} updated")
-
-#     conn.close()
-#     print("🎉 All batches processed!")
-
-# # === 5. Run ===
-# if __name__ == "__main__":
-#     update_posters()
-import sqlite3
+import os
 import requests
 import time
-import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 
-# -----------------------------
-# Config
-# -----------------------------
-OMDB_API_KEY = "507dbc7c"
+# --- Configuration ---
+# This is the API key you already have in your app.py
+OMDB_API_KEY = "ENTER API KEY HERE" 
 OMDB_URL = "https://www.omdbapi.com/"
-DB_PATH = "instance/movies.db"  # path to your existing init.db
 
-# -----------------------------
-# Update posters function
-# -----------------------------
-def update_posters(start_row=5001, batch_size=500):
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Database not found at {DB_PATH}")
-        return
+# --- Database Setup (copied from your app.py) ---
+db_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'instance'))
+db_path = os.path.join(db_dir, 'movies.db')
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+if not os.path.exists(db_path):
+    print(f"❌ Database file not found at {db_path}")
+    print("Please make sure your database exists before running this script.")
+    exit()
 
-    # Get total rows in table
-    cursor.execute("SELECT COUNT(*) FROM movies")
-    total_rows = cursor.fetchone()[0]
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-    print(f"Total movies in DB: {total_rows}")
+# --- Helper Function ---
+def fetch_poster_url(movie_name):
+    """
+    Fetches a single movie poster URL from OMDB.
+    """
+    try:
+        params = {"t": movie_name, "apikey": OMDB_API_KEY}
+        r = requests.get(OMDB_URL, params=params, timeout=5) # 5 second timeout
+        r.raise_for_status() # Raise an error for bad responses (4xx, 5xx)
+        data = r.json()
+        
+        if data.get("Response") == "True" and data.get("Poster") and data["Poster"] != "N/A":
+            return data["Poster"]
+        else:
+            print(f"  -> No poster found on OMDB for '{movie_name}'.")
+            return f"https://via.placeholder.com/300x420/1a1a2e/ffffff?text={movie_name.replace(' ', '+')}"
+    except requests.exceptions.Timeout:
+        print(f"  -> Timeout while fetching '{movie_name}'.")
+    except Exception as e:
+        print(f"  -> Network error for '{movie_name}': {e}")
+        
+    # Fallback placeholder
+    return f"https://via.placeholder.com/300x420/1a1a2e/ffffff?text={movie_name.replace(' ', '+')}"
 
-    # Fetch all movies from start_row to the last row
-    cursor.execute(
-        "SELECT rowid AS movie_id, name FROM movies WHERE rowid >= ? ORDER BY rowid",
-        (start_row,)
-    )
-    rows = cursor.fetchall()
-    total = len(rows)
-    print(f"📦 {total} movies from row {start_row} to {total_rows}. Starting poster updates...")
+# --- Main Execution ---
+def run_prefetch():
+    with app.app_context():
+        # 1. Find all movies that need a poster update
+        query = text("""
+            SELECT rowid, name, poster_url FROM movies 
+            WHERE poster_url IS NULL 
+               OR poster_url = 'N/A' 
+               OR poster_url = ''
+               OR poster_url LIKE '%placeholder.com%'
+        """)
+        
+        with db.engine.connect() as conn:
+            movies_to_fetch = conn.execute(query).mappings().all()
+        
+        total = len(movies_to_fetch)
+        print(f"Found {total} movies that need poster pre-fetching.")
+        
+        if total == 0:
+            print("Database is already up to date. Exiting.")
+            return
 
-    start = 0
-    batch_num = 1
-    while start < total:
-        batch = rows[start:start + batch_size]
-        if not batch:
-            break
-        print(f"⏳ Updating batch {batch_num} ({len(batch)} movies)")
-        for i, row in enumerate(batch):
-            mid, name = row
-            try:
-                params = {"t": name, "apikey": OMDB_API_KEY}
-                r = requests.get(OMDB_URL, params=params, timeout=5)
-                data = r.json()
-                poster = data.get("Poster")
-                if not poster or poster == "N/A":
-                    poster = f"https://via.placeholder.com/300x420/1a1a2e/ffffff?text={name.replace(' ', '+')}"
-                cursor.execute(
-                    "UPDATE movies SET poster_url = ? WHERE rowid = ?",
-                    (poster, mid)
+        # 2. Loop, fetch, and update (with a rate limit)
+        for i, movie in enumerate(movies_to_fetch):
+            movie_id = movie['rowid']
+            movie_name = movie['name']
+            
+            print(f"[{i+1}/{total}] Fetching poster for: {movie_name}...")
+            
+            new_poster_url = fetch_poster_url(movie_name)
+            
+            # 3. Update the database
+            with db.engine.begin() as conn: # Auto-commits
+                conn.execute(
+                    text("UPDATE movies SET poster_url = :url WHERE rowid = :id"),
+                    {"url": new_poster_url, "id": movie_id}
                 )
-                conn.commit()
-                print(f"✅ [{i+1}/{len(batch)}] Poster updated for '{name}'")
-            except Exception as e:
-                print(f"❌ [{i+1}/{len(batch)}] Error updating '{name}': {e}")
-            time.sleep(0.8)  # small delay to avoid hammering API
-        start += batch_size
-        batch_num += 1
+            
+            print(f"  -> Saved: {new_poster_url[:60]}...")
+            
+            # 4. IMPORTANT: Rate limit to be kind to the free API
+            # Do not remove this!
+            time.sleep(0.5) # 2 requests per second
 
-    conn.close()
-    print(f"🎉 Posters for movies from row {start_row} to {total_rows} updated successfully!")
+        print("\n✅ Poster pre-fetch complete!")
 
-# -----------------------------
-# Run script
-# -----------------------------
 if __name__ == "__main__":
-    update_posters(start_row=5001, batch_size=500)
+    run_prefetch()
