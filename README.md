@@ -35,14 +35,22 @@ UCE2023406 Vaishnavi Ahire
 UCE2023407  Anisha Kulal
 
 
-👨‍💻 Team Members
-Name	Role / Contribution
-Vaishnavi Ahire	Project Lead, Backend & ML Models
-Shreya Gujrathi	Frontend Development, UI/UX Design
-Siddhi Vaidya	Data Preprocessing, ML Evaluation
-Shruti Thakur	Research Paper & Documentation
-Eesha Kamath	Testing, Deployment, Integration
-📚 References & Attachments
+## 👨‍💻 Team Members
 
-Research Paper (PDF) : https://drive.google.com/file/d/14bKQwrmudq75F1PO8sybBAiVbwggWjf6/view?usp=drive_link
+| Roll No | Name           | 
+|---------|----------------|
+| UCE2023406 | Vaishnavi Ahire | 
+| UCE2023405 | Aarya Kulkarni  | 
+| UCE2023407 | Anisha Kulal    | 
+| -         | Shreya Gujrathi | 
+| -         | Siddhi Vaidya   | 
+| -         | Shruti Thakur   |
+| -         | Eesha Kamath    | 
+
+---
+
+## 📚 References & Attachments
+
+- **Research Paper (PDF):** [Click here to view](https://drive.google.com/file/d/14bKQwrmudq75F1PO8sybBAiVbwggWjf6/view?usp=drive_link)  
+- **Project Presentation (PPTX):** *(Add link if available)*
 
