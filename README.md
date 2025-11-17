@@ -29,12 +29,6 @@ It features a user-friendly web interface and a fully functional API for rating 
 
 ---
 
-## Team Members
-UCE2023405 Aarya Kulkarni
-UCE2023406 Vaishnavi Ahire 
-UCE2023407  Anisha Kulal
-
-
 ## 👨‍💻 Team Members
 
 | Roll No | Name           | 
@@ -42,10 +36,7 @@ UCE2023407  Anisha Kulal
 | UCE2023406 | Vaishnavi Ahire | 
 | UCE2023405 | Aarya Kulkarni  | 
 | UCE2023407 | Anisha Kulal    | 
-| -         | Shreya Gujrathi | 
-| -         | Siddhi Vaidya   | 
-| -         | Shruti Thakur   |
-| -         | Eesha Kamath    | 
+
 
 ---
 
