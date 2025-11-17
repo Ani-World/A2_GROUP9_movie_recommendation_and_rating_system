@@ -43,5 +43,5 @@ It features a user-friendly web interface and a fully functional API for rating 
 ## 📚 References & Attachments
 
 - **Research Paper (PDF):** [Click here to view](https://drive.google.com/file/d/14bKQwrmudq75F1PO8sybBAiVbwggWjf6/view?usp=drive_link)  
-- **Project Presentation (PPTX):** *(Add link if available)*
+- **Project Presentation (PPTX):** [*(Click here)*](https://www.canva.com/design/DAG44DYYtaw/GZiDyabUTw4eDyK3HsByPw/view?utm_content=DAG44DYYtaw&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hb1fedf6430)
 
