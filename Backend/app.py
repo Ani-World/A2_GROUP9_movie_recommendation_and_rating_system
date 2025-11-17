@@ -8,12 +8,23 @@ import numpy as np
 import joblib
 import requests
 import pandas as pd
+from fuzzy_predictor import predictor
 
 # --- Configuration and Setup ---
 # Configure logging for better output visibility
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 CORS(app)
+
+# --- 2. INITIALIZE FUZZY PREDICTOR ---
+# This runs when the app (and the reloader worker) starts,
+# fixing the "Predictor not initialized" bug.
+try:
+    with app.app_context(): # Needs an app context to load data from DB
+        predictor.init_app()
+except Exception as e:
+    print(f"⚠️ WARNING: Fuzzy predictor failed to initialize. {e}")
+    print("Fuzzy predictor API will not be available.")
 
 # NOTE: Using a static path for the database file location.
 # It is assumed that 'movies.db' is located in the 'instance' folder 
@@ -370,6 +381,41 @@ def apriori_boost_for_user(user_id, mids):
 # -----------------------------
 # 🔄 AUTH ENDPOINTS (Rewritten for DB Persistence) 🔄
 # -----------------------------
+@app.route('/api/predict_fuzzy', methods=['POST'])
+def api_predict_fuzzy():
+    data = request.get_json(force=True) or {}
+    
+    # Get data from the form
+    director = data.get('director')
+    actor1 = data.get('actor1')
+    actor2 = data.get('actor2') # Fixed typo: was data.tran.get
+    actor3 = data.get('actor3')
+    genre = data.get('genre')
+
+    # Use the global predictor instance
+    score, conf, invalid = predictor.predict(director, actor1, actor2, actor3, genre)
+    
+    if invalid:
+        # If inputs were bad (e.g., director not found)
+        return jsonify({
+            "error": "Invalid input.",
+            "invalid_fields": invalid,
+            "score": 0,
+            "confidence": 0,
+            "label": "Unknown"
+        }), 400
+    
+    # Determine Hit/Flop (using 1-10 scale from fuzzy predictor)
+    HIT_THRESHOLD = 6.5 
+    label = "HIT" if score >= HIT_THRESHOLD else "FLOP"
+    
+    return jsonify({
+        "score": score,
+        "confidence": conf,
+        "label": label,
+        "threshold": HIT_THRESHOLD,
+        "invalid_fields": []
+    }), 200
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
